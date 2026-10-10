@@ -1,15 +1,27 @@
-import { Instagram, Mail, MapPin, Phone, Youtube, Facebook, Twitter } from "lucide-react";
+import { Instagram, Mail, MapPin, Phone, Youtube, Facebook, Linkedin, Twitter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { Divider } from "../ui/Ornament.jsx";
 import "./footer.css";
 
+// lucide-react has no Google brand icon, so draw the "G" in the same outline style.
+function Google({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <path d="M21 12h-9" />
+    </svg>
+  );
+}
+
 const SOCIAL_PLATFORMS = [
   { key: "instagram", Icon: Instagram, label: "Instagram" },
   { key: "facebook",  Icon: Facebook,  label: "Facebook"  },
   { key: "youtube",   Icon: Youtube,   label: "YouTube"   },
-  { key: "twitter",   Icon: Twitter,   label: "X (Twitter)" },
+  { key: "linkedin",  Icon: Linkedin,  label: "LinkedIn"  },
+  { key: "google",    Icon: Google,    label: "Google"    },
+  { key: "x",         Icon: Twitter,   label: "X (Twitter)" },
 ];
 
 export function Footer() {
@@ -49,8 +61,8 @@ export function Footer() {
               )}
             </p>
             <div className="cluster">
-              {SOCIAL_PLATFORMS.map(({ key, Icon, label }) => (
-                <a key={key} href={social[key] || "#"} target={social[key] ? "_blank" : "_self"} rel="noopener noreferrer" className="social-link" aria-label={label}>
+              {SOCIAL_PLATFORMS.filter(({ key }) => social[key]).map(({ key, Icon, label }) => (
+                <a key={key} href={social[key]} target="_blank" rel="noopener noreferrer" className="social-link" aria-label={label}>
                   <Icon size={18} />
                 </a>
               ))}
