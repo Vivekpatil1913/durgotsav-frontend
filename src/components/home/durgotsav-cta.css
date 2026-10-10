@@ -1,0 +1,491 @@
+/* ================================================================ Durgotsav closing CTA
+   Layers (≈10): scene › stage › [img, flag-glow, sun-glow, mist×2, trail svg, birds svg] + scrim.
+   Everything animates transform / opacity only (the trail animates one stroke-dashoffset).
+   Ambient loops run only while the section is on-screen (.is-active, toggled by IntersectionObserver). */
+
+.dcta {
+  --dcta-maroon: #5a1f0b;
+  --dcta-saffron: #d96b16;
+  --dcta-gold: #f4b63f;
+  --dcta-gold-light: #ffd978;
+  --dcta-ivory: #fff4dc;
+  --dcta-brown: #2a1208;
+  --dcta-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: max(620px, 38.6vw); /* 38.6vw ≈ the image's own 2018:779 ratio */
+  padding-block: clamp(4.5rem, 3rem + 4vw, 7rem);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--dcta-brown); /* shown while the image streams in */
+  color: var(--dcta-ivory);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- scene / stage
+   The stage keeps the image's exact aspect ratio and "covers" the scene via container units,
+   so overlays positioned in % always sit on the same spot of the picture at any viewport. */
+.dcta__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  container-type: size;
+}
+.dcta__stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  translate: -50% -50%;
+  will-change: transform;
+}
+@supports (width: 1cqh) {
+  .dcta__stage {
+    width: max(100cqw, 100cqh * 2.5905);
+    height: auto;
+    aspect-ratio: 2018 / 779;
+  }
+}
+.dcta__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dcta__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 36% 52% at 50% 50%, rgb(42 18 8 / 0.34), transparent 78%),
+    linear-gradient(to bottom, transparent 82%, rgb(13 8 4 / 0.55));
+}
+
+/* ---------------------------------------------------------------- atmosphere */
+.dcta__atmos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dcta__atmos > * {
+  position: absolute;
+}
+
+/* Living light over the flag / upper fort */
+.dcta__flag-glow {
+  left: 2%;
+  top: -10%;
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 190 90 / 0.32), rgb(217 107 22 / 0.12) 55%, transparent);
+  opacity: 0.55;
+}
+
+/* Breath of the sun behind the warrior */
+.dcta__sun-glow {
+  left: 73.5%;
+  top: 4%;
+  width: 28%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 217 120 / 0.42), rgb(244 182 63 / 0.16) 60%, transparent);
+  opacity: 0.45;
+}
+
+/* Valley mist — soft gradients drifting sideways */
+.dcta__mist {
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 228 196 / 0.2), transparent);
+}
+.dcta__mist--a {
+  left: 28%;
+  top: 70%;
+  width: 46%;
+  height: 32%;
+}
+.dcta__mist--b {
+  left: -4%;
+  top: 60%;
+  width: 36%;
+  height: 34%;
+  opacity: 0.8;
+}
+
+/* Golden energy flowing along the existing light trail around the fort */
+.dcta__trail {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.dcta__trail-path {
+  fill: none;
+  stroke: url(#dcta-trail);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 90 910;
+  stroke-dashoffset: 1000;
+  opacity: 0;
+}
+
+/* Two distant birds */
+.dcta__birds {
+  left: 70%;
+  top: 13%;
+  width: 2.6%;
+  fill: none;
+  stroke: rgb(42 18 8 / 0.75);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------------- content */
+.dcta__content {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: clamp(1rem, 0.7rem + 0.8vw, 1.5rem);
+}
+
+.dcta__mark {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: var(--dcta-gold);
+}
+.dcta__mark-icon {
+  width: clamp(2.4rem, 2rem + 1.2vw, 3.2rem);
+  height: auto;
+  filter: drop-shadow(0 2px 10px rgb(42 18 8 / 0.35));
+}
+.dcta__rule {
+  position: relative;
+  width: clamp(3.5rem, 2rem + 6vw, 8rem);
+  height: 1px;
+  margin-top: 1.4em;
+  background: linear-gradient(90deg, transparent, var(--dcta-gold) 30%, var(--dcta-gold));
+}
+.dcta__rule:last-child {
+  transform: scaleX(-1);
+}
+.dcta__rule::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -2.5px;
+  width: 6px;
+  height: 6px;
+  rotate: 45deg;
+  background: var(--dcta-gold);
+}
+
+.dcta__title {
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 1.3rem + 3.4vw, 4.6rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  color: var(--dcta-ivory);
+  text-shadow: 0 2px 28px rgb(42 18 8 / 0.45);
+}
+.dcta__line {
+  display: block;
+}
+.dcta__title em {
+  font-style: normal;
+  color: var(--dcta-gold-light);
+  background: linear-gradient(180deg, var(--dcta-gold-light) 15%, var(--dcta-gold) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding: 0.2em 0.06em 0.1em;
+  margin: -0.2em -0.06em -0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 18px rgb(42 18 8 / 0.4));
+}
+
+.dcta__lead {
+  margin: 0;
+  max-width: 46ch;
+  font-size: clamp(1.05rem, 0.95rem + 0.45vw, 1.35rem);
+  line-height: 1.6;
+  color: rgb(255 244 220 / 0.94);
+  text-shadow: 0 1px 14px rgb(42 18 8 / 0.55);
+}
+
+/* ---------------------------------------------------------------- CTAs */
+.dcta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 1.25rem;
+  margin-top: 0.75rem;
+}
+.dcta__btn {
+  min-height: 60px;
+  padding-inline: 1.9em;
+  gap: 0.75em;
+  transition:
+    transform 0.35s var(--dcta-ease),
+    background-color 0.35s var(--dcta-ease),
+    border-color 0.35s var(--dcta-ease),
+    box-shadow 0.35s var(--dcta-ease);
+}
+.dcta__btn svg {
+  transition: transform 0.35s var(--dcta-ease);
+}
+.dcta__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--dcta-brown), 0 0 0 5px var(--dcta-gold-light);
+}
+
+.dcta .dcta__btn--primary {
+  --btn-bg: linear-gradient(180deg, var(--dcta-gold-light), var(--dcta-gold));
+  --btn-fg: var(--dcta-brown);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  box-shadow:
+    0 10px 30px rgb(244 182 63 / 0.35),
+    0 0 0 1px rgb(255 244 220 / 0.35) inset,
+    0 1px 0 rgb(255 255 255 / 0.5) inset;
+}
+.dcta__btn-fort {
+  width: 1.35em !important;
+  height: 1.35em !important;
+}
+/* Golden shine — runs once per hover, never loops */
+.dcta__btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.45) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.dcta .dcta__btn--primary:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow:
+    0 14px 36px rgb(244 182 63 / 0.45),
+    0 0 0 1px rgb(255 244 220 / 0.45) inset,
+    0 1px 0 rgb(255 255 255 / 0.55) inset;
+}
+.dcta__btn--primary:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.9s var(--dcta-ease);
+}
+.dcta__btn--primary:hover .dcta__btn-arrow,
+.dcta__btn--primary:focus-visible .dcta__btn-arrow {
+  transform: translateX(5px);
+}
+
+.dcta .dcta__btn--ghost {
+  --btn-border: rgb(255 244 220 / 0.55);
+  --btn-bg: rgb(42 18 8 / 0.16);
+  --btn-fg: var(--dcta-ivory);
+}
+.dcta .dcta__btn--ghost:hover {
+  --btn-border: rgb(255 217 120 / 0.95);
+  --btn-bg: rgb(244 182 63 / 0.14);
+}
+.dcta__btn--ghost:hover .dcta__btn-dl,
+.dcta__btn--ghost:focus-visible .dcta__btn-dl {
+  transform: translateY(2px);
+}
+
+/* ================================================================ motion
+   Only for users who allow motion; reduced-motion users get the finished, static scene. */
+@media (prefers-reduced-motion: no-preference) {
+  /* pre-entrance state */
+  .dcta:not(.is-in) .dcta__img,
+  .dcta:not(.is-in) .dcta__mark,
+  .dcta:not(.is-in) .dcta__line,
+  .dcta:not(.is-in) .dcta__lead,
+  .dcta:not(.is-in) .dcta__btn {
+    opacity: 0;
+  }
+
+  /* entrance (one-shot). `translate`/`scale` are used so hover `transform` still composes. */
+  .dcta.is-in .dcta__img {
+    animation: dcta-settle 1.4s var(--dcta-ease) both;
+  }
+  .dcta.is-in .dcta__mark {
+    animation: dcta-mark 0.8s var(--dcta-ease) 0.2s both;
+  }
+  .dcta.is-in .dcta__line {
+    animation: dcta-line 0.95s var(--dcta-ease) 0.35s both;
+  }
+  .dcta.is-in .dcta__line + .dcta__line {
+    animation-delay: 0.48s;
+  }
+  .dcta.is-in .dcta__lead {
+    animation: dcta-rise 0.7s var(--dcta-ease) 0.8s both;
+  }
+  .dcta.is-in .dcta__btn {
+    animation: dcta-rise 0.7s var(--dcta-ease) 1s both;
+  }
+  .dcta.is-in .dcta__btn + .dcta__btn {
+    animation-delay: 1.12s;
+  }
+
+  /* ambient loops (start after the entrance has settled) */
+  .dcta.is-in .dcta__flag-glow {
+    animation: dcta-flag 9s ease-in-out 1.2s infinite;
+  }
+  .dcta.is-in .dcta__sun-glow {
+    animation: dcta-sun 10s ease-in-out 1.2s infinite;
+  }
+  .dcta.is-in .dcta__mist--a {
+    animation: dcta-drift 26s ease-in-out infinite alternate;
+  }
+  .dcta.is-in .dcta__mist--b {
+    animation: dcta-drift 34s ease-in-out -12s infinite alternate-reverse;
+  }
+  .dcta.is-in .dcta__trail-path {
+    animation: dcta-trail 11s linear 1.6s infinite;
+  }
+  .dcta.is-in .dcta__birds {
+    animation: dcta-birds 28s linear 2s infinite;
+  }
+
+  /* Off-screen: freeze every loop — no CPU/GPU spent while the user reads elsewhere */
+  .dcta:not(.is-active) .dcta__atmos > *,
+  .dcta:not(.is-active) .dcta__trail-path {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes dcta-settle {
+  from { opacity: 0; scale: 1.015; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes dcta-mark {
+  from { opacity: 0; scale: 0.86; translate: 0 12px; }
+  to { opacity: 1; scale: 1; translate: 0 0; }
+}
+@keyframes dcta-line {
+  from { opacity: 0; translate: 0 30px; filter: blur(8px); }
+  to { opacity: 1; translate: 0 0; filter: blur(0); }
+}
+@keyframes dcta-rise {
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes dcta-flag {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.8; }
+}
+@keyframes dcta-sun {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.025); }
+}
+@keyframes dcta-drift {
+  0% { transform: translate3d(-4%, 0, 0); opacity: 0.55; }
+  50% { opacity: 0.95; }
+  100% { transform: translate3d(5%, -3%, 0); opacity: 0.6; }
+}
+@keyframes dcta-trail {
+  0% { stroke-dashoffset: 1000; opacity: 0; }
+  8% { opacity: 0.9; }
+  80% { opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes dcta-birds {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  10% { opacity: 0.55; }
+  85% { opacity: 0.55; }
+  100% { transform: translate3d(-260%, -90%, 0); opacity: 0; }
+}
+
+/* ================================================================ reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .dcta__btn,
+  .dcta__btn svg {
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .dcta .dcta__btn--primary:hover {
+    transform: none;
+  }
+  .dcta__btn--primary::after {
+    display: none;
+  }
+  .dcta__btn--primary:hover .dcta__btn-arrow,
+  .dcta__btn--ghost:hover .dcta__btn-dl {
+    transform: none;
+  }
+}
+
+/* ================================================================ tablet */
+@media (max-width: 1024px) {
+  .dcta {
+    min-height: 600px;
+  }
+  .dcta__birds,
+  .dcta__mist--b {
+    display: none;
+  }
+  .dcta__scrim {
+    background:
+      radial-gradient(ellipse 60% 55% at 50% 50%, rgb(42 18 8 / 0.42), transparent 80%),
+      linear-gradient(to bottom, transparent 80%, rgb(13 8 4 / 0.55));
+  }
+}
+
+/* ================================================================ mobile — dedicated composition
+   The full panorama (fort ⟷ warrior) becomes a banner on top; content sits below it on the
+   same warm dusk tone instead of over the fort/warrior. */
+@media (max-width: 760px) {
+  .dcta {
+    display: block;
+    min-height: 0;
+    padding: 0 0 clamp(3.5rem, 14vw, 4.5rem);
+    background: linear-gradient(180deg, #3b1a0b 0%, var(--dcta-brown) 60%, #170a04 100%);
+  }
+  .dcta__scene {
+    position: relative;
+    inset: auto;
+    height: calc(100vw / 2.45); /* ~95% of the panorama: fort, sun & warrior all stay in frame */
+    z-index: 0;
+  }
+  .dcta__scrim {
+    background:
+      radial-gradient(ellipse 30% 45% at 50% 52%, rgb(90 31 11 / 0.35), transparent 80%),
+      linear-gradient(to bottom, transparent 50%, #3b1a0b 100%);
+  }
+  .dcta__mist--a {
+    opacity: 0.7;
+  }
+  .dcta__content {
+    margin-top: -1.25rem;
+    gap: 1rem;
+  }
+  .dcta__title {
+    font-size: clamp(1.9rem, 1.2rem + 4.2vw, 2.6rem);
+  }
+  .dcta__lead {
+    max-width: 34ch;
+    font-size: 1.05rem;
+  }
+  .dcta__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: min(100%, 360px);
+    gap: 0.8rem;
+  }
+  .dcta__btn {
+    min-height: 54px;
+    white-space: normal;
+  }
+}

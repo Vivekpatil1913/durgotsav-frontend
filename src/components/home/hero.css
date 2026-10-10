@@ -1,0 +1,304 @@
+/*
+ * Hero — replicates the reference design (drawn at 1303×657).
+ * --u is one "design pixel": sizes are written as calc(var(--u) * N) with N taken from the mockup,
+ * so the composition scales identically on every screen and always fits the viewport height.
+ */
+.hero {
+  --u: min(calc(100vw / 1303), calc(100svh / 657));
+  --hero-font: "Poppins", var(--font-body);
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  /* behind the translucent navbar (the artwork starts below it, as in the design) */
+  background: linear-gradient(180deg, #5a2810, #7a3812);
+  font-family: var(--hero-font);
+  color: #fff;
+}
+.hero__bg {
+  position: absolute;
+  inset: 64px 0 0;
+  z-index: -2;
+}
+.hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+.hero__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgb(28 11 3 / 0.14) 0%, rgb(28 11 3 / 0.08) 40%, transparent 60%),
+    linear-gradient(180deg, transparent 78%, rgb(18 11 6 / 0.7) 96%, #120b06 100%);
+}
+
+/* ---- content block */
+.hero__content {
+  position: relative;
+  padding: max(calc(var(--u) * 108), calc(var(--header-h) + 16px)) 0 0 calc(var(--u) * 178);
+  max-width: calc(var(--u) * 800);
+}
+.hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 9);
+  margin: 0;
+  font-size: max(10px, calc(var(--u) * 9.6));
+  font-weight: 500;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: rgb(255 222 188 / 0.72);
+}
+.hero__eyebrow b {
+  font-weight: 600;
+  color: #fff;
+}
+.hero__dot {
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 5);
+  min-width: 4px;
+  min-height: 4px;
+  border-radius: 50%;
+  background: #f7862e;
+}
+.hero__brush {
+  display: block;
+  width: calc(var(--u) * 84);
+  height: calc(var(--u) * 9);
+  margin-top: calc(var(--u) * 11);
+  fill: #f26b1d;
+}
+
+.hero__title {
+  display: grid;
+  margin: calc(var(--u) * 2) 0 0;
+  line-height: 1;
+}
+.hero__name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 900;
+  font-size: calc(var(--u) * 108);
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  /* room for the "g" descender — background-clip:text only paints inside the box */
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
+  background: linear-gradient(180deg, #ffffff 0%, #fff6ea 45%, #ead2b4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 calc(var(--u) * 4) calc(var(--u) * 14) rgb(40 14 2 / 0.45));
+}
+.hero__year {
+  justify-self: start;
+  margin: calc(var(--u) * -8 - 0.08em) 0 -0.12em calc(var(--u) * 244);
+  font-family: "Kaushan Script", cursive;
+  font-weight: 400;
+  font-size: calc(var(--u) * 96);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  /* room for the script glyph overhangs (the tail of "6") */
+  padding: 0.08em 0.22em 0.12em 0;
+  margin-right: -0.22em;
+  transform: rotate(-4deg);
+  transform-origin: left center;
+  background: linear-gradient(180deg, #ffb24d 0%, #f6741f 50%, #dc4a0c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 10) rgb(40 10 0 / 0.45));
+}
+
+.hero__lead {
+  max-width: calc(var(--u) * 440);
+  margin: calc(var(--u) * 10) 0 0;
+  font-size: max(12px, calc(var(--u) * 13.2));
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0.03em;
+  color: #f6e9dc;
+  text-shadow: 0 1px 10px rgb(30 10 0 / 0.45);
+}
+
+/* ---- buttons */
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 22);
+  margin-top: calc(var(--u) * 18);
+}
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: max(48px, calc(var(--u) * 55));
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-base), background-color var(--dur-base), border-color var(--dur-base);
+}
+.hero-btn:active {
+  transform: scale(0.98);
+}
+.hero-btn--primary {
+  gap: calc(var(--u) * 20);
+  padding: calc(var(--u) * 8) calc(var(--u) * 9) calc(var(--u) * 8) calc(var(--u) * 37);
+  font-size: max(13px, calc(var(--u) * 14.6));
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #f5842c 0%, #ef6418 100%);
+  box-shadow: 0 calc(var(--u) * 10) calc(var(--u) * 28) rgb(232 92 20 / 0.42), inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+.hero-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 calc(var(--u) * 14) calc(var(--u) * 32) rgb(232 92 20 / 0.52), inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+.hero-btn__circle {
+  display: grid;
+  place-items: center;
+  width: max(34px, calc(var(--u) * 38));
+  height: max(34px, calc(var(--u) * 38));
+  border-radius: 50%;
+  background: #fff;
+  color: #ec5d14;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.hero-btn--primary:hover .hero-btn__circle {
+  transform: translateX(3px);
+}
+.hero-btn--outline {
+  gap: calc(var(--u) * 18);
+  padding: calc(var(--u) * 8) calc(var(--u) * 30) calc(var(--u) * 8) calc(var(--u) * 28);
+  border: 1.5px solid rgb(255 236 214 / 0.82);
+  background: rgb(40 16 4 / 0.12);
+  font-size: max(12px, calc(var(--u) * 12.4));
+  font-weight: 400;
+  line-height: 1.6;
+}
+.hero-btn--outline:hover {
+  border-color: #fff;
+  background: rgb(255 255 255 / 0.1);
+}
+.hero-btn__icon {
+  width: max(22px, calc(var(--u) * 26));
+  height: max(22px, calc(var(--u) * 26));
+  flex-shrink: 0;
+  stroke-width: 1.7;
+}
+.hero-btn__arrow {
+  display: inline-block;
+  margin-left: calc(var(--u) * 8);
+  vertical-align: -2px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.hero-btn--outline:hover .hero-btn__arrow {
+  transform: translateX(3px);
+}
+
+/* ---- feature row (anchored to the bottom-left, as in the design) */
+.hero__features {
+  position: absolute;
+  left: calc(var(--u) * 66);
+  bottom: calc(var(--u) * 58);
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hero__feature {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 20);
+  padding: calc(var(--u) * 4) calc(var(--u) * 27);
+  font-size: max(12px, calc(var(--u) * 12.8));
+  font-weight: 400;
+  line-height: 1.45;
+  color: #f8ece0;
+}
+.hero__feature:first-child {
+  padding-left: 0;
+}
+.hero__feature + .hero__feature {
+  border-left: 1px solid rgb(255 230 205 / 0.42);
+}
+.hero__feature-icon {
+  width: calc(var(--u) * 52);
+  height: calc(var(--u) * 52);
+  min-width: 34px;
+  min-height: 34px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgb(236 90 18 / 0.35));
+}
+
+/* ---- phones & small tablets: same look, stacked layout */
+@media (max-width: 760px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero__bg img {
+    object-position: 78% 50%;
+  }
+  .hero__shade {
+    background: linear-gradient(180deg, rgb(28 11 3 / 0.45) 0%, rgb(28 11 3 / 0.25) 38%, rgb(22 9 3 / 0.82) 72%, #120b06 100%);
+  }
+  .hero__content {
+    max-width: none;
+    padding: calc(var(--header-h) + 2.2rem) 1.25rem 0;
+  }
+  .hero__eyebrow {
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    flex-wrap: wrap;
+  }
+  .hero__brush {
+    width: 70px;
+    height: 8px;
+  }
+  .hero__name {
+    font-size: clamp(3.4rem, 18.5vw, 5.4rem);
+  }
+  .hero__year {
+    margin: -0.4em 0 -0.12em 34%;
+    font-size: clamp(3rem, 16vw, 4.6rem);
+  }
+  .hero__lead {
+    max-width: none;
+    font-size: 0.95rem;
+  }
+  .hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 1.4rem;
+  }
+  .hero-btn--primary {
+    justify-content: space-between;
+    padding: 6px 6px 6px 26px;
+    font-size: 1rem;
+  }
+  .hero-btn--outline {
+    padding: 8px 22px;
+    gap: 14px;
+    font-size: 0.85rem;
+  }
+  .hero__features {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 12px;
+    margin: auto 1.25rem 0;
+    padding: 2rem 0 5.2rem;
+  }
+  .hero__feature,
+  .hero__feature:first-child {
+    padding: 0;
+    gap: 10px;
+    border-left: 0 !important;
+    font-size: 0.82rem;
+  }
+}

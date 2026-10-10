@@ -1,0 +1,286 @@
+.fort-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--night-800);
+  border: 1px solid rgb(246 236 220 / 0.08);
+  color: var(--on-night);
+  text-decoration: none;
+  transition: transform var(--dur-slow) var(--ease-out), border-color var(--dur-base), box-shadow var(--dur-slow) var(--ease-out);
+}
+.fort-card:hover,
+.fort-card.is-active {
+  transform: translateY(-6px);
+  border-color: rgb(242 177 58 / 0.45);
+  box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
+}
+.fort-card__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--night-700);
+}
+.fort-card__media img,
+.fort-card__media svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s var(--ease-out);
+}
+.fort-card:hover .fort-card__media img,
+.fort-card:hover .fort-card__media svg {
+  transform: scale(1.06);
+}
+.fort-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgb(28 18 10 / 0.9));
+}
+.fort-card__body {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 0 16px 16px;
+  margin-top: -24px;
+  z-index: 1;
+}
+.fort-card__num {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--gold-500);
+}
+.fort-card__titles h3 {
+  font-size: var(--text-2xl);
+}
+.fort-card__en {
+  font-size: var(--text-xs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--on-night-subtle);
+}
+.fort-card__tagline {
+  color: var(--on-night-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fort-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--on-night-subtle);
+}
+.fort-card__arrow {
+  position: absolute;
+  top: 44px;
+  right: 20px;
+  width: 22px;
+  color: var(--gold-500);
+  opacity: 0;
+  transform: translate(-6px, 6px);
+  transition: all var(--dur-base) var(--ease-out);
+}
+.fort-card:hover .fort-card__arrow,
+.fort-card:focus-visible .fort-card__arrow {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------- home showcase */
+.forts-showcase {
+  overflow: hidden;
+}
+.forts-showcase .section-head__row {
+  margin-bottom: 0;
+}
+.forts-showcase__pin {
+  display: grid;
+  /* fixed-width column: the wide track must overflow, not stretch the grid */
+  grid-template-columns: minmax(0, 100%);
+  gap: clamp(2rem, 1rem + 2vw, 3rem);
+}
+.forts-showcase__track {
+  display: flex;
+  gap: 20px;
+  padding-inline: var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+  padding-bottom: 8px;
+}
+.forts-showcase__track::-webkit-scrollbar {
+  display: none;
+}
+.forts-showcase__track > * {
+  flex: 0 0 min(78vw, 340px);
+  scroll-snap-align: start;
+}
+.forts-showcase__end {
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgb(242 177 58 / 0.4);
+  text-align: center;
+}
+.forts-showcase__end strong {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+}
+@media (min-width: 1024px) {
+  .forts-showcase--pinned .forts-showcase__pin {
+    min-height: 100vh;
+    padding-top: var(--header-h);
+    align-content: center;
+  }
+  .forts-showcase--pinned .forts-showcase__track {
+    overflow: visible;
+    scroll-snap-type: none;
+    width: max-content;
+    justify-self: start;
+    padding-left: max(var(--gutter), calc((100vw - var(--container)) / 2));
+  }
+  .forts-showcase__track > * {
+    flex-basis: 340px;
+  }
+}
+.forts-showcase__progress {
+  height: 2px;
+  margin-inline: var(--gutter);
+  background: rgb(246 236 220 / 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.forts-showcase__progress span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--saffron-500), var(--gold-500));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+/* ---------------------------------------------------------------- map */
+.fort-map {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(80% 60% at 70% 30%, rgb(194 100 28 / 0.12), transparent 70%),
+    var(--night-800);
+  border: 1px solid rgb(246 236 220 / 0.08);
+  padding: 16px;
+}
+.fort-map svg {
+  width: 100%;
+  height: auto;
+  max-height: 72vh;
+}
+.fort-map__sea {
+  fill: rgb(47 93 107 / 0.18);
+}
+.fort-map__coast {
+  fill: none;
+  stroke: rgb(127 177 191 / 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+.fort-map__grid line {
+  stroke: rgb(246 236 220 / 0.05);
+}
+.fort-map__label {
+  fill: var(--on-night-subtle);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.fort-map__pin {
+  cursor: pointer;
+}
+.fort-map__pin circle.ring {
+  fill: none;
+  stroke: var(--gold-500);
+  stroke-opacity: 0.4;
+  transition: r 300ms var(--ease-out), stroke-opacity 300ms;
+}
+.fort-map__pin circle.dot {
+  fill: var(--gold-500);
+  transition: fill 300ms;
+}
+.fort-map__pin text {
+  fill: var(--on-night);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--night-800);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.fort-map__pin.is-active circle.ring {
+  r: 16;
+  stroke-opacity: 1;
+}
+.fort-map__pin.is-active circle.dot {
+  fill: var(--saffron-500);
+}
+.fort-map__pin:focus-visible {
+  outline: none;
+}
+.fort-map__pin:focus-visible circle.ring {
+  stroke: #fff;
+  stroke-opacity: 1;
+}
+.fort-map__note {
+  position: absolute;
+  right: 20px;
+  bottom: 16px;
+  max-width: 200px;
+  font-size: var(--text-xs);
+  color: var(--on-night-subtle);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- google maps embed */
+.fort-gmap-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 0.12);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.12);
+}
+.fort-gmap-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+@media (max-width: 640px) {
+  .fort-gmap-wrap { aspect-ratio: 4 / 3; }
+}
+
+/* ---------------------------------------------------------------- wikipedia credit */
+.fort-wiki-credit {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--on-night-subtle);
+}
+.fort-wiki-credit a {
+  color: var(--gold-400);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
