@@ -553,10 +553,13 @@ function gpDist(i, active, n) {
   return d;
 }
 
-function gpStyle(dist, reduced) {
+const GP_TOUCH_DUR = 650;   // faster slide when the user swipes
+const GP_RESUME    = 6000;  // autoplay resumes this long after the last touch
+
+function gpStyle(dist, reduced, touched) {
   const abs = Math.abs(dist);
   const s   = dist < 0 ? -1 : 1;
-  const dur = reduced ? 250 : GP_DUR;
+  const dur = reduced ? 250 : touched ? GP_TOUCH_DUR : GP_DUR;
   const ease = reduced ? 'ease' : GP_EASE;
 
   let tx, ty, sc, ry, op, z, blur;
@@ -589,8 +592,11 @@ function GpCarousel({ displayed, items, onOpen }) {
   const n = displayed.length;
   const [active,  setActive]  = useState(0);
   const [shown,   setShown]   = useState(0);
-  const paused = false;
+  const [paused,  setPaused]  = useState(false);
   const drag = useRef({ x: 0, moved: false });
+  const touch = useRef({ x: 0, y: 0 });
+  const resumeTimer = useRef(null);
+  useEffect(() => () => clearTimeout(resumeTimer.current), []);
   const reduced = useRef(
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -601,10 +607,10 @@ function GpCarousel({ displayed, items, onOpen }) {
     setActive(prev => {
       const next = (prev + dir + n) % n;
       setShown(null);
-      setTimeout(() => setShown(next), reduced ? 0 : GP_DUR - 150);
+      setTimeout(() => setShown(next), reduced ? 0 : (paused ? GP_TOUCH_DUR : GP_DUR) - 150);
       return next;
     });
-  }, [n, reduced]);
+  }, [n, reduced, paused]);
 
   useEffect(() => {
     if (paused || reduced) return;
@@ -612,10 +618,31 @@ function GpCarousel({ displayed, items, onOpen }) {
     return () => clearTimeout(id);
   }, [active, paused, reduced, advance]);
 
-  const onDown   = (e) => { drag.current = { x: e.clientX, moved: false }; };
-  const onMove   = (e) => { if (Math.abs(e.clientX - drag.current.x) > 8) drag.current.moved = true; };
-  const onUp     = (e) => { const d = e.clientX - drag.current.x; if (Math.abs(d) > 44) advance(d < 0 ? 1 : -1); };
+  // Mouse drag (desktop) — touch is handled separately below
+  const onDown   = (e) => { if (e.pointerType !== 'mouse') return; drag.current = { x: e.clientX, moved: false }; };
+  const onMove   = (e) => { if (e.pointerType !== 'mouse') return; if (Math.abs(e.clientX - drag.current.x) > 8) drag.current.moved = true; };
+  const onUp     = (e) => { if (e.pointerType !== 'mouse') return; const d = e.clientX - drag.current.x; if (Math.abs(d) > 44) advance(d < 0 ? 1 : -1); };
   const onCancel = ()  => { drag.current = { x: 0, moved: false }; };
+
+  // Touch swipe (mobile): pauses autoplay while the user is in control
+  const onTouchStart = (e) => {
+    const p = e.touches[0];
+    touch.current = { x: p.clientX, y: p.clientY };
+    drag.current.moved = false;
+    clearTimeout(resumeTimer.current);
+    setPaused(true);
+  };
+  const onTouchMove = (e) => {
+    const p = e.touches[0];
+    if (Math.abs(p.clientX - touch.current.x) > 8) drag.current.moved = true;
+  };
+  const onTouchEnd = (e) => {
+    const p = e.changedTouches[0];
+    const dx = p.clientX - touch.current.x;
+    const dy = p.clientY - touch.current.y;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) advance(dx < 0 ? 1 : -1);
+    resumeTimer.current = setTimeout(() => setPaused(false), GP_RESUME);
+  };
 
   return (
     <div
@@ -627,6 +654,9 @@ function GpCarousel({ displayed, items, onOpen }) {
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onCancel}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       {displayed.map((p, i) => {
         const dist     = gpDist(i, active, n);
@@ -636,7 +666,7 @@ function GpCarousel({ displayed, items, onOpen }) {
           <div
             key={p.id}
             className="gp-slide"
-            style={gpStyle(dist, reduced)}
+            style={gpStyle(dist, reduced, paused)}
             aria-hidden={Math.abs(dist) > 2 || undefined}
             aria-roledescription="slide"
           >

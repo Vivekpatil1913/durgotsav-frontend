@@ -28,8 +28,9 @@ export function lockScroll(locked) {
 }
 
 export function scrollToTop() {
-  if (lenis) lenis.scrollTo(0, { immediate: true });
-  else window.scrollTo(0, 0);
+  // force: still jump while Lenis is stopped (e.g. a menu/modal was open)
+  if (lenis) lenis.scrollTo(0, { immediate: true, force: true });
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 
 export function scrollToElement(el) {

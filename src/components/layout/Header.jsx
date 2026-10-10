@@ -17,9 +17,6 @@ const NAV = [
 
 const MOBILE_EXTRA = [
   { to: "/forts",       label: { en: "12 Forts", mr: "१२ दुर्ग" } },
-  { to: "/certificate", label: { en: "Congratulation Letter", mr: "अभिनंदन पत्र" } },
-  { to: "/updates",     label: { en: "Updates", mr: "अपडेट्स" } },
-  { to: "/videos",      label: { en: "Videos", mr: "व्हिडिओ" } },
   { to: "/faq",         label: { en: "FAQ", mr: "प्रश्नोत्तरे" } },
   { to: "/contact",     label: { en: "Contact", mr: "संपर्क" } },
 ];
@@ -49,7 +46,12 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the menu and release the scroll lock synchronously on navigation, so
+  // Layout's scroll-to-top (which runs after this effect) isn't blocked.
+  useEffect(() => {
+    setOpen(false);
+    lockScroll(false);
+  }, [pathname]);
   useEffect(() => {
     lockScroll(open);
     if (!open) return undefined;
@@ -137,6 +139,7 @@ export function Header() {
             id="mobile-menu"
             className="mobile-menu"
             aria-label="Mobile"
+            data-lenis-prevent
             initial={{ opacity: 0, clipPath: reducedMotion ? "circle(150% at 100% 0%)" : "circle(0% at 100% 0%)" }}
             animate={{ opacity: 1, clipPath: "circle(150% at 100% 0%)" }}
             exit={{ opacity: 0, clipPath: reducedMotion ? "circle(150% at 100% 0%)" : "circle(0% at 100% 0%)" }}

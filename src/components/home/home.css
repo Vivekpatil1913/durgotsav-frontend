@@ -972,6 +972,13 @@ section.story {
   user-select: none;
   -webkit-user-select: none;
 }
+/* Mobile/tablet: the active card (4:5 image + expanded detail) is taller than the base min-height */
+@media (max-width: 859px) {
+  .gp-stage { min-height: 440px; }
+}
+@media (min-width: 540px) and (max-width: 859px) {
+  .gp-stage { min-height: 490px; }
+}
 
 /* All cards stacked at center, fanned out by inline transform */
 .gp-slide {

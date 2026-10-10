@@ -53,6 +53,11 @@ export function FortsShowcase({ forts = [] }) {
     return () => mm.revert();
   }, [forts.length]);
 
+  // Scroll-snap keeps the previously snapped card when forts load in front of it — always start at the first fort
+  useLayoutEffect(() => {
+    if (track.current) track.current.scrollLeft = 0;
+  }, [forts.length]);
+
   // The pinned layout changes the track's width, so measurements must be redone after it renders
   useLayoutEffect(() => {
     if (pinned) ScrollTrigger.refresh();
@@ -80,11 +85,13 @@ export function FortsShowcase({ forts = [] }) {
               <FortCard fort={fort} index={i} />
             </div>
           ))}
-          <div role="listitem" className="forts-showcase__end">
-            <strong>{t("Which fort is yours?", "आपला दुर्ग कोणता?")}</strong>
-            <p className="muted">{t("Build a replica of any fort and join Durgotsav.", "कोणत्याही दुर्गाची प्रतिकृती बनवा आणि दुर्गोत्सवात सहभागी व्हा.")}</p>
-            <Link to="/participate" className="btn btn--primary">{t("Join Now", "सहभागी व्हा")}</Link>
-          </div>
+          {forts.length > 0 && (
+            <div role="listitem" className="forts-showcase__end">
+              <strong>{t("Which fort is yours?", "आपला दुर्ग कोणता?")}</strong>
+              <p className="muted">{t("Build a replica of any fort and join Durgotsav.", "कोणत्याही दुर्गाची प्रतिकृती बनवा आणि दुर्गोत्सवात सहभागी व्हा.")}</p>
+              <Link to="/participate" className="btn btn--primary">{t("Join Now", "सहभागी व्हा")}</Link>
+            </div>
+          )}
         </div>
         {pinned && <div className="forts-showcase__progress" aria-hidden="true"><span /></div>}
       </div>

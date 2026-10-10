@@ -7,15 +7,28 @@
   height: var(--header-h);
   font-family: var(--nav-font);
   --header-h: 64px;
-  background: linear-gradient(180deg, rgb(38 18 7 / 0.78), rgb(38 18 7 / 0.55));
-  backdrop-filter: blur(8px);
   border-bottom: 1px solid rgb(255 255 255 / 0.07);
-  transition: background-color var(--dur-base), box-shadow var(--dur-base);
+  transition: box-shadow var(--dur-base);
+}
+/* Background + blur live on a pseudo-element: backdrop-filter on the header itself
+   would make it the containing block for the position:fixed mobile menu, clipping it. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(38 18 7 / 0.78), rgb(38 18 7 / 0.55));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: background var(--dur-base);
 }
 .site-header.is-solid {
-  background: rgb(30 14 5 / 0.92);
-  backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+.site-header.is-solid::before {
+  background: rgb(30 14 5 / 0.92);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
 }
 .site-header__bar {
   display: flex;
@@ -180,6 +193,9 @@
   gap: var(--space-6);
   padding: var(--space-6) var(--gutter) calc(var(--space-6) + env(safe-area-inset-bottom));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   background:
     radial-gradient(90% 60% at 100% 0%, rgb(232 120 30 / 0.25), transparent 60%),
     var(--night-900);
