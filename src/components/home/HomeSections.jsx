@@ -360,7 +360,7 @@ export function FestivalBanner() {
           <blockquote className="festival-banner__quote">
             {t(
               <>There is no other tradition in the world that pays such tribute to{" "}<strong>the glorious history of a nation.</strong></>,
-              <>जगात असी कोणतीही परंपरा नाही जी अशा प्रकारे{" "}<strong>देशाच्या गौरवशाली इतिहासाला श्रद्धांजली वाहते.</strong></>
+              <>जगात असी कोणतीही परंपरा नाही जी अशा प्रकारे{" "}<strong>देशाच्या गौरवशाली इतिहासाला आदरांजली वाहते.</strong></>
             )}
           </blockquote>
 
