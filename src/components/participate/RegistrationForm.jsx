@@ -352,8 +352,8 @@ export function RegistrationForm() {
           </button>
         ) : <span />}
         {step < 2 ? (
-          <button type="button" className="btn btn--primary" disabled style={{ cursor: "not-allowed" }}>
-            {t("Coming soon", "लवकरच येत आहे")}
+          <button type="submit" className="btn btn--primary" disabled={preparing}>
+            {t("Next", "पुढे")} <ArrowRight aria-hidden="true" />
           </button>
         ) : (
           <button type="submit" className="btn btn--primary" disabled={progress !== null}>
