@@ -1,6 +1,7 @@
 import { FortsShowcase } from "../components/home/FortsShowcase.jsx";
 import { DurgotsavCta } from "../components/home/DurgotsavCta.jsx";
 import { Hero } from "../components/home/Hero.jsx";
+import { Podcasts } from "../components/home/Podcasts.jsx";
 import "../components/home/hero.css";
 import { ImportantDates } from "../components/home/ImportantDates.jsx";
 import { FestivalBanner, GalleryPreview, Mission, Story, Voices, WorldRecord } from "../components/home/HomeSections.jsx";
@@ -56,6 +57,7 @@ export default function Home() {
       <WorldRecord />
       <Voices testimonials={home.testimonials} />
       <GalleryPreview photos={home.gallery} />
+      <Podcasts />
       <DurgotsavCta />
     </>
   );

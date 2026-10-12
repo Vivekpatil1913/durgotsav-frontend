@@ -37,6 +37,7 @@ export function Footer() {
       ["/participate",        t("How to Participate", "सहभाग कसा घ्यावा")],
       ["/participate#register", t("Register", "नोंदणी")],
       ["/gallery",            t("Gallery", "गॅलरी")],
+      ["/videos",             t("Videos & Podcasts", "व्हिडिओ व पॉडकास्ट")],
       ["/faq",                t("FAQ", "प्रश्नोत्तरे")],
       ["/contact",            t("Contact & Help", "संपर्क व मदत")],
     ]],
@@ -56,8 +57,8 @@ export function Footer() {
             <p className="site-footer__tagline">{t("Let's Build a Fort!", "चला, दुर्ग बनवूया!")}</p>
             <p className="site-footer__about">
               {t(
-                "Maharashtra Research, Upliftment and Training Academy (AMRUT) — an autonomous institution of the Government of Maharashtra — is the organiser of this people's festival.",
-                "महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत) — महाराष्ट्र शासनाची स्वायत्त संस्था — यांचा लोकोत्सव."
+                "Organised by Maharashtra Research, Upliftment and Training Academy (AMRUT) — a people's festival celebrating the glorious forts of Swarajya.",
+                "महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत) आयोजित — स्वराज्याच्या दुर्गवैभवाचा लोकोत्सव."
               )}
             </p>
             <div className="cluster">
@@ -93,9 +94,6 @@ export function Footer() {
         </div>
 
         <Divider className="site-footer__divider" />
-        {(lang === "mr" ? settings.initiative?.gr_reference : (settings.initiative?.gr_reference_en || settings.initiative?.gr_reference)) && (
-          <p className="site-footer__gr">{lang === "mr" ? settings.initiative.gr_reference : (settings.initiative.gr_reference_en || settings.initiative.gr_reference)}</p>
-        )}
 
         <div className="site-footer__bottom">
           <p>{t("© 2026 AMRUT, Maharashtra. All rights reserved.", "© २०२६ अमृत, महाराष्ट्र. सर्व हक्क राखीव.")}</p>

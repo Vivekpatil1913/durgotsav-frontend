@@ -113,6 +113,23 @@
   filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 10) rgb(40 10 0 / 0.45));
 }
 
+/* Marathi: Devanagari face, plus room above for matras/reph (ो, र्) —
+   background-clip:text only paints inside the box */
+:lang(mr) .hero__name {
+  font-family: "Tiro Devanagari Marathi", "Noto Serif Devanagari", serif;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.1;
+  padding-top: 0.28em;
+  margin-top: -0.28em;
+}
+:lang(mr) .hero__year {
+  font-family: "Tiro Devanagari Marathi", "Noto Serif Devanagari", serif;
+  font-style: italic;
+  padding-top: 0.18em;
+  margin-top: calc(var(--u) * -8 - 0.18em);
+}
+
 .hero__lead {
   max-width: calc(var(--u) * 440);
   margin: calc(var(--u) * 10) 0 0;
@@ -265,6 +282,9 @@
   .hero__year {
     margin: -0.4em 0 -0.12em 34%;
     font-size: clamp(3rem, 16vw, 4.6rem);
+  }
+  :lang(mr) .hero__year {
+    margin-top: -0.5em;
   }
   .hero__lead {
     max-width: none;

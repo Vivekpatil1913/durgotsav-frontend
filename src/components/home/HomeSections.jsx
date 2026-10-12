@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Award, Camera, ChevronLeft, ChevronRight, Hammer, Megaphone, ScrollText, ShieldCheck, Upload, Users } from "lucide-react";
+import { Award, Camera, ChevronLeft, ChevronRight, Hammer, Megaphone, ShieldCheck, Upload, Users, ZoomIn } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Autoplay, A11y } from "swiper/modules";
@@ -180,15 +180,6 @@ export function Mission() {
                 </p>
               </div>
             </div>
-            {settings.initiative?.gr_reference && (
-              <div className="mission__fact">
-                <span className="mission__fact-icon"><ScrollText aria-hidden="true" /></span>
-                <div>
-                  <strong>{t("Government Resolution", "शासन निर्णय")}</strong>
-                  <p>{settings.initiative.gr_reference}</p>
-                </div>
-              </div>
-            )}
           </div>
 
           <Link to="/about" className="link-arrow">{t("Read full campaign objectives →", "मोहिमेचे संपूर्ण उद्दिष्ट →")}</Link>
@@ -378,37 +369,81 @@ export function FestivalBanner() {
 }
 
 // ---------------------------------------------------------------- 2025 world record
+const WR_CERTIFICATE = "/images/guinness-certificate.webp";
+
 export function WorldRecord() {
   const { settings } = useSite();
   const t = useT();
   const wr = settings.world_record;
+  const [lightbox, setLightbox] = useState(null);
   if (!wr?.enabled) return null;
+
+  const certAlt = t("Official Guinness World Records certificate — Largest online photo album of handmade sculptures, AMRUT, 10 November 2025", "अधिकृत Guinness World Records प्रमाणपत्र — हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम, अमृत, १० नोव्हेंबर २०२५");
+  const ceremonyAlt = t("Durgotsav 2025 — Guinness World Records certificate acceptance ceremony", "दुर्गोत्सव २०२५ — Guinness World Records प्रमाणपत्र स्वीकृती सोहळा");
+  const items = [
+    { src: WR_CERTIFICATE, alt: certAlt, caption: t("Official Guinness World Records certificate", "अधिकृत Guinness World Records प्रमाणपत्र") },
+    ...(wr.image ? [{ src: wr.image, alt: ceremonyAlt, caption: t("Certificate acceptance ceremony", "प्रमाणपत्र स्वीकृती सोहळा") }] : []),
+  ];
+  const facts = [
+    [t("Record", "विक्रम"), t("Guinness World Records™", "गिनीज वर्ल्ड रेकॉर्ड्स™")],
+    [t("Achieved on", "दिनांक"), t("10 November 2025", "१० नोव्हेंबर २०२५")],
+    [t("Place", "स्थळ"), t("Pune, Maharashtra", "पुणे, महाराष्ट्र")],
+  ];
+
   return (
     <section id="world-record" className="section surface-night world-record" aria-labelledby="wr-title">
-      <div className="container split">
-        <Reveal className="world-record__media">
-          <div className="img-frame">
-            <Img
-              src={wr.image}
-              alt={t("Durgotsav 2025 — Guinness World Records certificate acceptance ceremony", "दुर्गोत्सव २०२५ — Guinness World Records प्रमाणपत्र स्वीकृती सोहळा")}
-              width="1400"
-              height="1093"
-            />
-          </div>
-          <span className="world-record__seal" aria-hidden="true">GUINNESS<br />WORLD<br />RECORDS™<br /><small>2025</small></span>
-        </Reveal>
-        <Reveal className="stack" delay={0.1}>
-          <span className="eyebrow">{wr.eyebrow}</span>
-          <h2 id="wr-title" className="world-record__title">{wr.title}</h2>
-          <blockquote className="world-record__quote">
-            "The largest online photo album of handmade sculptures was achieved by The Academy of Maharashtra Research, Upliftment and Training (AMRUT), The Government of Maharashtra (India), in Pune, Maharashtra, India, on 10 November 2025."
-          </blockquote>
-          <p className="world-record__body">{wr.body}</p>
-          <div className="cluster">
-            <Link to="/album" className="btn btn--gold">{t("World Record Photo Album", "विश्वविक्रमी फोटो अल्बम")}</Link>
-          </div>
+      <div className="container world-record__wrap">
+        <div className="world-record__head">
+          <Reveal className="stack">
+            <span className="eyebrow">{t(wr.eyebrow_en || "Durgotsav 2025 — World Record Glory", wr.eyebrow)}</span>
+            <h2 id="wr-title" className="world-record__title">{t(wr.title_en || wr.title, wr.title_mr || "हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम")}</h2>
+            <blockquote className="world-record__quote">
+              "{t(
+                "The largest online photo album of handmade sculptures was achieved by The Academy of Maharashtra Research, Upliftment and Training (AMRUT), The Government of Maharashtra (India), in Pune, Maharashtra, India, on 10 November 2025.",
+                "हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम हा विक्रम महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत), महाराष्ट्र शासन (भारत) यांनी पुणे, महाराष्ट्र, भारत येथे १० नोव्हेंबर २०२५ रोजी प्रस्थापित केला."
+              )}"
+            </blockquote>
+          </Reveal>
+          <Reveal className="stack world-record__content" delay={0.1}>
+            <dl className="world-record__facts">
+              {facts.map(([k, v]) => (
+                <div key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="world-record__body">
+              {t(
+                wr.body_en || "Together, we earned Durgotsav a place in the Guinness Book of World Records. This is a proud moment for every participant, volunteer and well-wisher. Let's take this tradition even higher in Durgotsav 2026!",
+                wr.body
+              )}
+            </p>
+            <div className="cluster">
+              <Link to="/album" className="btn btn--gold">{t("World Record Photo Album", "विश्वविक्रमी फोटो अल्बम")}</Link>
+              <button type="button" className="btn btn--ghost" onClick={() => setLightbox(0)}>
+                <ShieldCheck size={18} aria-hidden="true" /> {t("View Certificate", "प्रमाणपत्र पाहा")}
+              </button>
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal className="world-record__media" delay={0.15}>
+          {items.map((item, i) => (
+            <figure key={item.src} className={`world-record__photo ${i === 0 ? "world-record__photo--cert" : "world-record__photo--ceremony"}`}>
+              <button type="button" onClick={() => setLightbox(i)} aria-label={t(`View in full size: ${item.caption}`, `मोठ्या आकारात पाहा: ${item.caption}`)}>
+                <Img src={item.src} alt={item.alt} width={i === 0 ? "1200" : "1400"} height={i === 0 ? "1600" : "1093"} />
+                <span className="world-record__zoom" aria-hidden="true"><ZoomIn size={18} /></span>
+              </button>
+              <figcaption>
+                {i === 0 && <Award size={16} aria-hidden="true" />}
+                {item.caption}
+              </figcaption>
+            </figure>
+          ))}
         </Reveal>
       </div>
+      <Lightbox items={items} index={lightbox} onClose={() => setLightbox(null)} onIndex={setLightbox} />
     </section>
   );
 }
@@ -723,7 +758,7 @@ export function GalleryPreview({ photos = [] }) {
   }));
 
   return (
-    <section className="section surface-night" style={{ paddingBottom: 0 }} aria-labelledby="gp-title">
+    <section className="section surface-night" style={{ paddingTop: "calc(var(--section-y) * 0.45)", paddingBottom: 0 }} aria-labelledby="gp-title">
       <div className="container">
         <div className="section-head__row">
           <Reveal className="section-head">

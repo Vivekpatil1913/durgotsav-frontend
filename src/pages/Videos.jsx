@@ -1,9 +1,10 @@
-import { Play, Video } from "lucide-react";
+import { Play } from "lucide-react";
 import { useState } from "react";
 import { StatsBand } from "../components/home/HomeSections.jsx";
+import { Podcasts } from "../components/home/Podcasts.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { Img } from "../components/ui/Img.jsx";
-import { EmptyState, ErrorState, PageHero, SkeletonGrid } from "../components/ui/PageParts.jsx";
+import { ErrorState, PageHero, SkeletonGrid } from "../components/ui/PageParts.jsx";
 import { Reveal } from "../components/ui/Reveal.jsx";
 import { useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -56,20 +57,18 @@ export default function Videos() {
           "दुर्गोत्सव, दुर्गसंवर्धन आणि स्वराज्याच्या इतिहासाविषयी निवडक व्हिडिओ."
         )}
       />
-      <section className="section surface-night">
-        <div className="container">
-          {error && <ErrorState error={error} onRetry={reload} />}
-          {loading && <SkeletonGrid count={3} ratio="16 / 9" />}
-          {!loading && !error && videos.length === 0 && (
-            <EmptyState icon={Video} title={t("Videos Coming Soon", "व्हिडिओ लवकरच")}>
-              {t("Durgotsav videos will be published here.", "दुर्गोत्सवाचे व्हिडिओ येथे प्रसिद्ध केले जातील.")}
-            </EmptyState>
-          )}
-          <div className="grid grid--3">
-            {videos.map((v, i) => <Reveal key={v.id} delay={i * 0.05}><VideoCard video={v} /></Reveal>)}
+      <Podcasts />
+      {(loading || error || videos.length > 0) && (
+        <section className="section surface-night">
+          <div className="container">
+            {error && <ErrorState error={error} onRetry={reload} />}
+            {loading && <SkeletonGrid count={3} ratio="16 / 9" />}
+            <div className="grid grid--3">
+              {videos.map((v, i) => <Reveal key={v.id} delay={i * 0.05}><VideoCard video={v} /></Reveal>)}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       <StatsBand />
     </>
   );

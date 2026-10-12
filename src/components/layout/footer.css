@@ -143,18 +143,10 @@
   background: rgb(194 100 28 / 0.15);
   color: var(--gold-300);
 }
-/* ── Divider & GR note ────────────────────────────────── */
+/* ── Divider ────────────────────────────────── */
 .site-footer__divider {
   margin: var(--space-6) auto var(--space-4);
   color: var(--bronze-500);
-}
-.site-footer__gr {
-  max-width: 70ch;
-  margin-inline: auto;
-  text-align: center;
-  font-size: var(--text-xs);
-  color: rgb(246 236 220 / 0.7);
-  line-height: 1.6;
 }
 
 /* ── Bottom bar ───────────────────────────────────────── */

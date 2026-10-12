@@ -1,4 +1,4 @@
-import { Award, Landmark, ScrollText } from "lucide-react";
+import { Award, Landmark } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
@@ -49,9 +49,6 @@ export default function About() {
                 <Award aria-hidden="true" />
                 <span><strong>{t("World Record", "विश्वविक्रम")}</strong> — Durgotsav 2025: Largest Online Photo Album of Handmade Sculptures</span>
               </p>
-              {(lang === "mr" ? settings.initiative?.gr_reference : (settings.initiative?.gr_reference_en || settings.initiative?.gr_reference)) && (
-                <p className="about-fact"><ScrollText aria-hidden="true" /> <span>{lang === "mr" ? settings.initiative.gr_reference : (settings.initiative.gr_reference_en || settings.initiative.gr_reference)}</span></p>
-              )}
               <Link to="/participate" className="btn btn--primary btn--block">{t("Participate", "सहभागी व्हा")}</Link>
             </Reveal>
           </aside>

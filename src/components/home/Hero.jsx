@@ -65,8 +65,8 @@ export function Hero() {
         </p>
         <Brush />
         <h1 id="hero-title" className="hero__title">
-          <span className="hero__name">Durgotsav</span>
-          <span className="hero__year">{year}</span>
+          <span className="hero__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
+          <span className="hero__year">{t(year, year.replace(/[0-9]/g, (d) => "०१२३४५६७८९"[d]))}</span>
         </h1>
         <p className="hero__lead">
           {t(

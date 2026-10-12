@@ -17,6 +17,7 @@ const NAV = [
 
 const MOBILE_EXTRA = [
   { to: "/forts",       label: { en: "12 Forts", mr: "१२ दुर्ग" } },
+  { to: "/videos",      label: { en: "Videos & Podcasts", mr: "व्हिडिओ व पॉडकास्ट" } },
   { to: "/faq",         label: { en: "FAQ", mr: "प्रश्नोत्तरे" } },
   { to: "/contact",     label: { en: "Contact", mr: "संपर्क" } },
 ];
@@ -99,7 +100,7 @@ export function Header() {
           <img className="brand__emblem" src="/brand/emblem-white.webp" alt="" width="40" height="48" />
           <img className="brand__amrut" src="/brand/amrut-white.webp" alt="" width="96" height="48" />
           <img className="brand__logo" src="/brand/durgotsav-logo-320.webp" alt="" width="44" height="44" />
-          <span className="brand__name">Durgotsav {year}</span>
+          <span className="brand__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
         </Link>
 
         <nav className="site-nav" aria-label="Main">
