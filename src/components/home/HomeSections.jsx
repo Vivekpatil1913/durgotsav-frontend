@@ -56,13 +56,13 @@ export function Story() {
 
           <h2 id="story-title" className="story__title">
             <span className="story__title-accent">{t("Diwali's", "दिवाळीतला")}</span>{" "}
-            {t("Clay Fort — Maharashtra's Unique Folk Tradition", "मातीचा किल्ला — महाराष्ट्राची अनोखी लोकपरंपरा")}
+            {t("Clay Fort — Maharashtra's Unique Folk Tradition", "मातीचा दुर्ग — महाराष्ट्राची अनोखी लोकपरंपरा")}
           </h2>
           <Divider className="story__divider" />
           <p className="story__lead">
             {t(
-              "During Diwali, the tradition of building small and large replicas of forts collectively — according to the available space — is deeply connected to Maharashtra's cultural and historical heritage.",
-              "दीपावलीच्या कालावधीत उपलब्ध जागेनुसार लहान-मोठ्यांनी एकत्रितपणे दुर्गांच्या प्रतिकृती तयार करण्याची प्रथा ही महाराष्ट्राच्या सांस्कृतिक व ऐतिहासिक परंपरेशी निगडित आहे."
+              "During the sacred days of Diwali, young and old come together to build fort replicas in whatever space they have — this is Maharashtra's own cultural and historical tradition!",
+              "दीपावलीच्या पावन काळात उपलब्ध जागेनुसार लहान-मोठ्यांनी एकत्र येऊन दुर्गांच्या प्रतिकृती तयार करणे, ही तर आपल्या महाराष्ट्राची सांस्कृतिक आणि ऐतिहासिक परंपरा!"
             )}
           </p>
           <p className="muted">
@@ -350,14 +350,14 @@ export function FestivalBanner() {
 
           <blockquote className="festival-banner__quote">
             {t(
-              <>There is no other tradition in the world that pays such tribute to{" "}<strong>the glorious history of a nation.</strong></>,
-              <>जगात असी कोणतीही परंपरा नाही जी अशा प्रकारे{" "}<strong>देशाच्या गौरवशाली इतिहासाला आदरांजली वाहते.</strong></>
+              <>Nowhere else in the world is there a tradition that brings{" "}<strong>our nation's glorious history to life like this!</strong></>,
+              <>जगाच्या पाठीवर अशी कोणतीही परंपरा नाही, जिथे{" "}<strong>आपल्या देशाच्या गौरवशाली इतिहासाला अशाप्रकारे उजाळा दिला जातो!</strong></>
             )}
           </blockquote>
 
           <div className="festival-banner__rule" />
 
-          <p className="festival-banner__sub">{t("So let's celebrate this festival!", "तर चला, हा उत्सव साजरा करूया!")}</p>
+          <p className="festival-banner__sub">{t("So come, take part and be a witness to this unique tradition!", "तर मग सहभागी व्हा आणि या अनोख्या परंपरेचे साक्षीदार व्हा!")}</p>
 
           <div className="cluster" style={{ justifyContent: "center" }}>
             <Link to="/participate" className="btn btn--primary">{t("Join Durgotsav", "दुर्गोत्सवात सहभागी व्हा")}</Link>
@@ -399,8 +399,8 @@ export function WorldRecord() {
             <h2 id="wr-title" className="world-record__title">{t(wr.title_en || wr.title, wr.title_mr || "हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम")}</h2>
             <blockquote className="world-record__quote">
               "{t(
-                "The largest online photo album of handmade sculptures was achieved by The Academy of Maharashtra Research, Upliftment and Training (AMRUT), The Government of Maharashtra (India), in Pune, Maharashtra, India, on 10 November 2025.",
-                "हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम हा विक्रम महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत), महाराष्ट्र शासन (भारत) यांनी पुणे, महाराष्ट्र, भारत येथे १० नोव्हेंबर २०२५ रोजी प्रस्थापित केला."
+                "The largest online photo album of handmade sculptures is 14,891 and was achieved by the Academy of Maharashtra Research, Upliftment and Training (AMRUT), The Government of Maharashtra (India), in Pune, Maharashtra, India, on 10 November 2025.",
+                "१४,८९१ छायाचित्रांचा हस्तनिर्मित शिल्पांचा सर्वात मोठा ऑनलाइन फोटो अल्बम हा विक्रम महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत), महाराष्ट्र शासन (भारत) यांनी पुणे, महाराष्ट्र, भारत येथे १० नोव्हेंबर २०२५ रोजी प्रस्थापित केला."
               )}"
             </blockquote>
           </Reveal>
@@ -432,7 +432,7 @@ export function WorldRecord() {
           {items.map((item, i) => (
             <figure key={item.src} className={`world-record__photo ${i === 0 ? "world-record__photo--cert" : "world-record__photo--ceremony"}`}>
               <button type="button" onClick={() => setLightbox(i)} aria-label={t(`View in full size: ${item.caption}`, `मोठ्या आकारात पाहा: ${item.caption}`)}>
-                <Img src={item.src} alt={item.alt} width={i === 0 ? "1200" : "1400"} height={i === 0 ? "1600" : "1093"} />
+                <Img src={item.src} alt={item.alt} width={i === 0 ? "1200" : "1400"} height={i === 0 ? "1835" : "1093"} />
                 <span className="world-record__zoom" aria-hidden="true"><ZoomIn size={18} /></span>
               </button>
               <figcaption>

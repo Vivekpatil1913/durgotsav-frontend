@@ -18,7 +18,7 @@ export function ImportantDates() {
       date:  t("18 October 2026", "१८ ऑक्टोबर २०२६"),
       tag:   "Festival Begins",
       img:   "/images/ml-icon-fort.png",
-      alt:   t("Durgotsav — Fort", "दुर्गोत्सव — किल्ला"),
+      alt:   t("Durgotsav — Fort", "दुर्गोत्सव — दुर्ग"),
     },
     {
       num:   t("02", "०२"),

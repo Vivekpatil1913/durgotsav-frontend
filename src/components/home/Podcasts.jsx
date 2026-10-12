@@ -17,7 +17,7 @@ export const PODCASTS = [
   },
   {
     id: "ERUZw50VpSI",
-    title: { mr: "छत्रपतींच्या किल्ल्यांमागची कथा: शौर्य आणि संस्कारांचा प्रवास", en: "The Story Behind Chhatrapati's Forts: A Journey of Valour and Values" },
+    title: { mr: "छत्रपतींच्या दुर्गांमागची कथा: शौर्य आणि संस्कारांचा प्रवास", en: "The Story Behind Chhatrapati's Forts: A Journey of Valour and Values" },
   },
   {
     id: "Jvdb3nCGpsc",

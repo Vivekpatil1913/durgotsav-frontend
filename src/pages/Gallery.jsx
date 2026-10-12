@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { StatsBand } from "../components/home/HomeSections.jsx";
+import { Highlights2025 } from "../components/gallery/Highlights2025.jsx";
 import { PhotoFilters, PhotoGrid } from "../components/gallery/PhotoGrid.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { EmptyState, ErrorState, PageHero, SkeletonGrid } from "../components/ui/PageParts.jsx";
@@ -77,6 +78,7 @@ export default function Gallery() {
           "पडताळणी पूर्ण झालेल्या प्रतिकृतींपैकी निवडक छायाचित्रे. सर्व छायाचित्रे पाहण्यासाठी फोटो अल्बम उघडा."
         )}
       />
+      <Highlights2025 />
       <section className="section surface-night">
         <div className="container">
           <div className="gallery-toolbar">

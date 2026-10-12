@@ -18,6 +18,12 @@ const STEP_FIELDS = [
   ["consent"],
 ];
 
+// One id per form fill, sent with every submit attempt so a retry after a dropped connection
+// returns the registration already saved instead of creating a second one.
+const newSubmissionId = () =>
+  globalThis.crypto?.randomUUID?.() ??
+  "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (c ^ (Math.random() * 16) >> (c / 4)).toString(16));
+
 function validate(step, v, photo, t) {
   const e = {};
   if (step === 0) {
@@ -48,6 +54,7 @@ export function RegistrationForm() {
   const [result, setResult] = useState(null);
   const topRef = useRef(null);
   const fileRef = useRef(null);
+  const submissionId = useRef(newSubmissionId());
 
   const STEPS = [
     t("Your Details", "आपली माहिती"),
@@ -93,6 +100,7 @@ export function RegistrationForm() {
 
   async function submit(e) {
     e.preventDefault();
+    if (progress !== null) return; // a submit is already in flight (Enter key while uploading)
     if (step < 2) return next();
     const errs = validate(2, values, photo, t);
     setErrors(errs);
@@ -111,6 +119,7 @@ export function RegistrationForm() {
     if (values.replica_notes) body.append("replica_notes", values.replica_notes.trim());
     body.append("consent", "true");
     body.append("website", values.website);
+    body.append("submission_id", submissionId.current);
     body.append("photo", photo.file);
 
     setFormError("");
@@ -136,7 +145,7 @@ export function RegistrationForm() {
     }
   }
 
-  if (result) return <Success result={result} onReset={() => { setResult(null); setValues(EMPTY); setPhoto(null); setStep(0); }} />;
+  if (result) return <Success result={result} onReset={() => { submissionId.current = newSubmissionId(); setResult(null); setValues(EMPTY); setPhoto(null); setStep(0); }} />;
 
   const fortName = forts.find((f) => String(f.id) === String(values.fort_id));
   const fortLabel = fortName ? (lang === "mr" ? fortName.name_mr : (fortName.name_en || fortName.name_mr)) : null;
@@ -349,7 +358,9 @@ export function RegistrationForm() {
         ) : (
           <button type="submit" className="btn btn--primary" disabled={progress !== null}>
             {progress !== null
-              ? <><Loader2 className="spin" aria-hidden="true" /> {t(`Uploading ${progress}%`, `अपलोड ${progress}%`)}</>
+              ? <><Loader2 className="spin" aria-hidden="true" /> {progress < 100
+                ? t(`Uploading ${progress}%`, `अपलोड ${progress}%`)
+                : t("Saving your photo…", "छायाचित्र जतन करत आहे…")}</>
               : <>{t("Complete Registration", "नोंदणी पूर्ण करा")} <Check aria-hidden="true" /></>}
           </button>
         )}

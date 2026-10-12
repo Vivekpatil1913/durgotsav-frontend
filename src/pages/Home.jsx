@@ -1,5 +1,6 @@
 import { FortsShowcase } from "../components/home/FortsShowcase.jsx";
 import { DurgotsavCta } from "../components/home/DurgotsavCta.jsx";
+import { Highlights2025 } from "../components/gallery/Highlights2025.jsx";
 import { Hero } from "../components/home/Hero.jsx";
 import { Podcasts } from "../components/home/Podcasts.jsx";
 import "../components/home/hero.css";
@@ -56,7 +57,8 @@ export default function Home() {
       <FestivalBanner />
       <WorldRecord />
       <Voices testimonials={home.testimonials} />
-      <GalleryPreview photos={home.gallery} />
+      {/* No verified 2026 photos yet → show curated 2025 highlights instead */}
+      {data && (home.gallery?.length ? <GalleryPreview photos={home.gallery} /> : <Highlights2025 limit={10} />)}
       <Podcasts />
       <DurgotsavCta />
     </>

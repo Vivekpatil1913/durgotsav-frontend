@@ -17,7 +17,7 @@ export function FortVisual({ fort, index = 0, eager, wikiSrc }) {
     return (
       <Img
         src={src}
-        alt={lang === "mr" ? `${fort.name_mr} किल्ला` : `${fort.name_en} Fort`}
+        alt={lang === "mr" ? `${fort.name_mr} दुर्ग` : `${fort.name_en} Fort`}
         eager={eager}
         onError={() => setImgFailed(true)}
       />

@@ -631,7 +631,7 @@ section.story {
   margin: 0;
   min-width: 0;
 }
-.world-record__photo--cert { flex: 0.75 1 0; }       /* 1200 × 1600 */
+.world-record__photo--cert { flex: 0.654 1 0; }      /* 1200 × 1835 */
 .world-record__photo--ceremony { flex: 1.281 1 0; }  /* 1400 × 1093 */
 .world-record__photo button {
   position: relative;
@@ -649,7 +649,7 @@ section.story {
     0 0 50px -16px rgb(242 177 58 / 0.3);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
-.world-record__photo--cert button { aspect-ratio: 3 / 4; }
+.world-record__photo--cert button { aspect-ratio: 1200 / 1835; }
 .world-record__photo--ceremony button { aspect-ratio: 1400 / 1093; }
 .world-record__photo button:hover,
 .world-record__photo button:focus-visible {

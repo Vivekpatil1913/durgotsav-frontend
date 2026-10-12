@@ -61,7 +61,7 @@ export function Hero() {
       <div className="hero__content">
         <p className="hero__eyebrow">
           <span className="hero__dot" aria-hidden="true" />
-          {t("Celebrating ", "महाराष्ट्राचा ")}<b>{t("the glorious heritage", "गौरवशाली वारसा")}</b>{t(" of Maharashtra", " साजरा करूया")}
+          {t("Maharashtra's ", "महाराष्ट्राचा ")}<b>{t("glorious heritage", "गौरवशाली वारसा")}</b>{t("... for the next generation", "...पुढील पिढीसाठी")}
         </p>
         <Brush />
         <h1 id="hero-title" className="hero__title">
@@ -71,7 +71,7 @@ export function Hero() {
         <p className="hero__lead">
           {t(
             "Our 12 forts, which have stood as witnesses to the prowess of Shiv Chhatrapati, have recently been recognized as world heritage sites by UNESCO, thanks to the tireless efforts of the Maharashtra government.",
-            "शिवछत्रपतींच्या पराक्रमाचे साक्षीदार असलेल्या आपल्या १२ दुर्गांना महाराष्ट्र शासनाच्या अथक प्रयत्नांमुळे नुकतेच युनेस्कोने जागतिक वारसा स्थळांचा दर्जा दिला आहे."
+            "छत्रपती शिवाजी महाराजांच्या पराक्रमाचे साक्षीदार असणाऱ्या १२ दुर्गांना महाराष्ट्र शासनाच्या अथक प्रयत्नांमुळे युनेस्कोने नुकताच जागतिक वारसा स्थळांचा दर्जा दिला आहे."
           )}
         </p>
         <div className="hero__actions">
