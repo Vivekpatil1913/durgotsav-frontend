@@ -4,33 +4,41 @@
   background: var(--night-900);
 }
 
-.help-fab {
+.contact-fabs {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
   z-index: 90;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   align-items: center;
-  gap: 8px;
-  padding: 12px 18px 12px 14px;
-  border-radius: var(--radius-pill);
-  background: #1f7a4d;
+}
+
+.contact-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
-  transition: transform var(--dur-base) var(--ease-out);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.help-fab:hover {
-  transform: translateY(-2px);
+
+.contact-fab--whatsapp {
+  background: #25d366;
+  box-shadow: 0 4px 16px rgb(37 211 102 / 0.5);
 }
-@media (max-width: 480px) {
-  .help-fab span {
-    display: none;
-  }
-  .help-fab {
-    padding: 14px;
-  }
+
+.contact-fab--call {
+  background: #e63a2e;
+  box-shadow: 0 4px 16px rgb(230 58 46 / 0.5);
+}
+
+.contact-fab:hover {
+  transform: translateY(-3px);
 }
 
 .mandala-spin {
