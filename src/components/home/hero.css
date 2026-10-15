@@ -129,6 +129,10 @@
   padding-top: 0.18em;
   margin-top: calc(var(--u) * -8 - 0.18em);
 }
+:not(:lang(mr)) .hero__name {
+  font-size: calc(var(--u) * 82);
+  white-space: nowrap;
+}
 
 .hero__lead {
   max-width: calc(var(--u) * 440);
@@ -278,6 +282,10 @@
   }
   .hero__name {
     font-size: clamp(3.4rem, 18.5vw, 5.4rem);
+  }
+  :not(:lang(mr)) .hero__name {
+    font-size: clamp(1.9rem, 10vw, 3.2rem);
+    white-space: normal;
   }
   .hero__year {
     margin: -0.4em 0 -0.12em 34%;

@@ -39,7 +39,7 @@ export default function Forts() {
         )}
       />
       <PageHero
-        eyebrow="Maratha Military Landscapes of India"
+        eyebrow={t("Maratha Military Landscapes of India", "मराठा मिलिटरी लँडस्केप्स ऑफ इंडिया")}
         title={t("Twelve UNESCO World Heritage Forts of Shivaji", "शिवछत्रपतींचे बारा जागतिक वारसा दुर्ग")}
         lead={t(
           "From the hill forts of the Sahyadri ranges to the sea forts in the ocean — this chain of forts built to protect Swarajya was included in UNESCO's World Heritage list in 2025.",

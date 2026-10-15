@@ -14,6 +14,7 @@ import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { SITE_URL } from "../lib/api.js";
 import { assetUrl, FORT_TYPES, FORT_TYPES_EN } from "../lib/format.js";
+import { RegistrationTeaser } from "../components/participate/RegistrationTeaser.jsx";
 import NotFound from "./NotFound.jsx";
 import "./pages.css";
 
@@ -41,21 +42,39 @@ export default function FortDetail() {
   }));
   const paragraphs = (fort.history || "").split(/\n\s*\n/).filter(Boolean);
 
-  const jsonLd = {
+  const landmarkSchema = {
     "@context": "https://schema.org",
-    "@type": "LandmarksOrHistoricalBuildings",
+    "@type": "TouristAttraction",
+    additionalType: "https://schema.org/HistoricalBuilding",
     name: `${fort.name_en} Fort`,
     alternateName: fort.name_mr,
     description: fort.summary,
     url: `${SITE_URL}/forts/${fort.slug}`,
     image: fort.cover_image ? assetUrl(fort.cover_image) : undefined,
     geo: fort.latitude ? { "@type": "GeoCoordinates", latitude: fort.latitude, longitude: fort.longitude } : undefined,
-    address: { "@type": "PostalAddress", addressRegion: fort.state, addressCountry: "IN" },
+    address: { "@type": "PostalAddress", addressRegion: fort.state || "Maharashtra", addressCountry: "IN" },
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "12 Forts", item: `${SITE_URL}/forts` },
+      { "@type": "ListItem", position: 3, name: fort.name_en, item: `${SITE_URL}/forts/${fort.slug}` },
+    ],
   };
 
   return (
     <>
-      <Seo title={`${fort.name_mr} (${fort.name_en})`} description={fort.summary} image={fort.cover_image} type="article" jsonLd={jsonLd} />
+      <Seo
+        title={`${fort.name_mr} (${fort.name_en})`}
+        description={fort.summary}
+        image={fort.cover_image}
+        imageAlt={`${fort.name_en} Fort — UNESCO World Heritage Site, Maharashtra`}
+        type="article"
+        jsonLd={[landmarkSchema, breadcrumbSchema]}
+      />
       <section className="fort-hero">
         <div className="fort-hero__media" aria-hidden="true"><FortVisual fort={fort} index={fort.sort_order} eager wikiSrc={wikiHeroSrc} /></div>
         <div className="fort-hero__shade" aria-hidden="true" />
@@ -106,6 +125,12 @@ export default function FortDetail() {
               {t(`Build a replica of this fort`, `या दुर्गाची प्रतिकृती बनवा`)}
             </Link>
           </Reveal>
+        </div>
+      </section>
+
+      <section className="section section--tight surface-parchment">
+        <div className="container container--narrow">
+          <RegistrationTeaser />
         </div>
       </section>
 

@@ -20,6 +20,7 @@ const Updates = lazy(() => import("./pages/Updates.jsx"));
 const Faq = lazy(() => import("./pages/Faq.jsx"));
 const Contact = lazy(() => import("./pages/Contact.jsx"));
 const ContentPage = lazy(() => import("./pages/ContentPage.jsx"));
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 const router = createBrowserRouter([
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: "updates", element: <Updates /> },
       { path: "faq", element: <Faq /> },
       { path: "contact", element: <Contact /> },
+      { path: "dashboard", element: <Dashboard /> },
       { path: "rules", element: <ContentPage slug="rules" /> },
       { path: "privacy", element: <ContentPage slug="privacy" /> },
       { path: "terms", element: <ContentPage slug="terms" /> },

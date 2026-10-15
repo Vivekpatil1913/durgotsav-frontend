@@ -6,6 +6,7 @@ import { Podcasts } from "../components/home/Podcasts.jsx";
 import "../components/home/hero.css";
 import { ImportantDates } from "../components/home/ImportantDates.jsx";
 import { FestivalBanner, GalleryPreview, Mission, Story, Voices, WorldRecord } from "../components/home/HomeSections.jsx";
+import { RegistrationTeaser } from "../components/participate/RegistrationTeaser.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -22,11 +23,26 @@ export default function Home() {
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebSite",
+        name: "Amrut Durgotsav",
+        url: SITE_URL,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/forts?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
         "@type": "Organization",
         name: "AMRUT — Academy of Maharashtra Research, Upliftment and Training",
         alternateName: "महाराष्ट्र संशोधन, उन्नती व प्रशिक्षण प्रबोधिनी (अमृत)",
         url: SITE_URL,
-        logo: `${SITE_URL}/brand/durgotsav-logo-512.png`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/brand/durgotsav-logo-320.webp`,
+          width: 320,
+          height: 320,
+        },
         email: settings.contact?.email,
         telephone: settings.contact?.phone,
       },
@@ -54,6 +70,11 @@ export default function Home() {
       <Mission />
       <FortsShowcase forts={home.forts} />
       <ImportantDates />
+      <section className="section section--tight surface-parchment">
+        <div className="container container--narrow">
+          <RegistrationTeaser />
+        </div>
+      </section>
       <FestivalBanner />
       <WorldRecord />
       <Voices testimonials={home.testimonials} />

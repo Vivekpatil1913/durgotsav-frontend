@@ -108,7 +108,7 @@ function DownloadTab({ initial }) {
   );
 }
 
-const STATUS_ICON = { pending: Clock, info_requested: AlertCircle, verified: BadgeCheck, rejected: XCircle };
+const STATUS_ICON = { pending: Clock, info_requested: AlertCircle, verified: BadgeCheck, rejected: XCircle, duplicate: XCircle };
 
 function Resubmit({ query, onDone }) {
   const t = useT();

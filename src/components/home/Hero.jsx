@@ -54,7 +54,11 @@ export function Hero() {
   return (
     <section className="hero" ref={root} aria-labelledby="hero-title">
       <div className="hero__bg" aria-hidden="true">
-        <img src="/images/hero-sunset.webp" srcSet="/images/hero-sunset-960.webp 960w, /images/hero-sunset.webp 1920w" sizes="100vw" alt="" fetchPriority="high" decoding="async" />
+        <picture>
+          <source type="image/avif" srcSet="/images/hero-sunset-960.avif 960w, /images/hero-sunset.avif 1920w" sizes="100vw" />
+          <source type="image/webp" srcSet="/images/hero-sunset-960.webp 960w, /images/hero-sunset.webp 1920w" sizes="100vw" />
+          <img src="/images/hero-sunset.webp" alt="" fetchPriority="high" decoding="async" />
+        </picture>
       </div>
       <div className="hero__shade" aria-hidden="true" />
 
@@ -65,7 +69,7 @@ export function Hero() {
         </p>
         <Brush />
         <h1 id="hero-title" className="hero__title">
-          <span className="hero__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
+          <span className="hero__name">{t("Amrut Durgotsav", "अमृत दुर्गोत्सव")}</span>
           <span className="hero__year">{t(year, year.replace(/[0-9]/g, (d) => "०१२३४५६७८९"[d]))}</span>
         </h1>
         <p className="hero__lead">

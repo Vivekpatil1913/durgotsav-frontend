@@ -1,33 +1,11 @@
 import { ExternalLink, Headphones, Play } from "lucide-react";
 import { useState } from "react";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
+import { useApi } from "../../hooks/useApi.js";
 import { Img } from "../ui/Img.jsx";
 import { Reveal } from "../ui/Reveal.jsx";
 import "./podcasts.css";
 
-// Podcasts recorded during Durgotsav 2025 (YouTube video ids)
-export const PODCASTS = [
-  {
-    id: "a1e7gGWgisQ",
-    title: { mr: "शिवछत्रपतींचे गडदुर्ग रहस्य – प्र. के. घाणेकर यांची ज्ञानगाथा | भाग पहिला", en: "Secrets of Shivaji Maharaj's Forts – The Knowledge Saga of P. K. Ghanekar | Part 1" },
-  },
-  {
-    id: "q6-J8HfxacY",
-    title: { mr: "शिवछत्रपतींचे गडदुर्ग रहस्य – प्र. के. घाणेकर यांची ज्ञानगाथा | भाग दुसरा", en: "Secrets of Shivaji Maharaj's Forts – The Knowledge Saga of P. K. Ghanekar | Part 2" },
-  },
-  {
-    id: "ERUZw50VpSI",
-    title: { mr: "छत्रपतींच्या दुर्गांमागची कथा: शौर्य आणि संस्कारांचा प्रवास", en: "The Story Behind Chhatrapati's Forts: A Journey of Valour and Values" },
-  },
-  {
-    id: "Jvdb3nCGpsc",
-    title: { mr: "Inside AMRUT’s Guinness Record: Official Remarks by Mr. Praveen Patel", en: "Inside AMRUT’s Guinness Record: Official Remarks by Mr. Praveen Patel" },
-  },
-  {
-    id: "SOxzZ50gEoM",
-    title: { mr: "SHIVABA RAJA – By AMRUT", en: "SHIVABA RAJA – By AMRUT" },
-  },
-];
 
 const thumb = (id, size = "hqdefault") => `https://i.ytimg.com/vi/${id}/${size}.jpg`;
 const toMr = (s) => String(s).replace(/[0-9]/g, (d) => "०१२३४५६७८९"[d]);
@@ -41,8 +19,12 @@ export function Podcasts({ className = "" }) {
   const isMr = useLang().lang === "mr";
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const current = PODCASTS[active];
-  const title = (p) => t(p.title.en, p.title.mr);
+  // Episodes are managed in the admin panel (Content → Podcasts)
+  const episodes = useApi("/podcasts").data?.data ?? [];
+  const current = episodes[active];
+  const title = (p) => t(p.title_en, p.title_mr);
+
+  if (!current) return null;
 
   const select = (i) => {
     setActive(i);
@@ -68,15 +50,15 @@ export function Podcasts({ className = "" }) {
             <div className="podcasts__frame">
               {playing ? (
                 <iframe
-                  key={current.id}
-                  src={`https://www.youtube-nocookie.com/embed/${current.id}?autoplay=1&rel=0`}
+                  key={current.youtube_id}
+                  src={`https://www.youtube-nocookie.com/embed/${current.youtube_id}?autoplay=1&rel=0`}
                   title={title(current)}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               ) : (
                 <button type="button" onClick={() => setPlaying(true)} aria-label={t(`Play: ${title(current)}`, `चालू करा: ${title(current)}`)}>
-                  <Img src={thumb(current.id, "hqdefault")} alt="" width="480" height="360" />
+                  <Img src={thumb(current.youtube_id, "hqdefault")} alt="" width="480" height="360" />
                   <span className="podcasts__play" aria-hidden="true"><Play size={30} fill="currentColor" /></span>
                 </button>
               )}
@@ -87,7 +69,7 @@ export function Podcasts({ className = "" }) {
                 {t("Episode", "भाग")} {num(active + 1, isMr)}
               </span>
               <h3>{title(current)}</h3>
-              <a className="podcasts__yt" href={`https://youtu.be/${current.id}`} target="_blank" rel="noopener noreferrer">
+              <a className="podcasts__yt" href={`https://youtu.be/${current.youtube_id}`} target="_blank" rel="noopener noreferrer">
                 {t("Watch on YouTube", "YouTube वर पाहा")} <ExternalLink size={14} aria-hidden="true" />
               </a>
             </div>
@@ -95,10 +77,10 @@ export function Podcasts({ className = "" }) {
 
           <Reveal delay={0.1} className="podcasts__list-wrap">
             <p className="podcasts__count">
-              {t(`${PODCASTS.length} episodes`, `${toMr(PODCASTS.length)} भाग`)}
+              {t(`${episodes.length} episodes`, `${toMr(episodes.length)} भाग`)}
             </p>
             <ol className="podcasts__list">
-              {PODCASTS.map((p, i) => (
+              {episodes.map((p, i) => (
                 <li key={p.id}>
                   <button
                     type="button"
@@ -107,7 +89,7 @@ export function Podcasts({ className = "" }) {
                     onClick={() => select(i)}
                   >
                     <span className="podcasts__thumb">
-                      <Img src={thumb(p.id, "mqdefault")} alt="" width="320" height="180" />
+                      <Img src={thumb(p.youtube_id, "mqdefault")} alt="" width="320" height="180" />
                       <span className="podcasts__thumb-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span>
                     </span>
                     <span className="podcasts__meta">

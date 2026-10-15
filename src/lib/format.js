@@ -64,6 +64,7 @@ export const STATUS = {
   info_requested: { label: "अतिरिक्त माहिती आवश्यक", tone: "warning" },
   verified:       { label: "पडताळणी पूर्ण",          tone: "success" },
   rejected:       { label: "नोंदणी अमान्य",           tone: "danger"  },
+  duplicate:      { label: "छायाचित्र आधीच वापरलेले",   tone: "danger"  },
 };
 
 export const STATUS_EN = {
@@ -71,6 +72,7 @@ export const STATUS_EN = {
   info_requested: { label: "Additional Info Required",   tone: "warning" },
   verified:       { label: "Verified",                   tone: "success" },
   rejected:       { label: "Registration Rejected",      tone: "danger"  },
+  duplicate:      { label: "Duplicate Photo",            tone: "danger"  },
 };
 
 export function youtubeId(url) {

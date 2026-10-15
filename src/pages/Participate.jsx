@@ -13,12 +13,16 @@ import { enDate, mrDate } from "../lib/format.js";
 import { Markdown, sections } from "../lib/markdown.jsx";
 import "./pages.css";
 
+const FORCE_OPEN = import.meta.env.VITE_REGISTRATION_FORCE_OPEN === "true";
+
 function ClosedNotice({ status }) {
   const { settings } = useSite();
   const { lang } = useLang();
   const t = useT();
   const notStarted = status.reason === "not_started";
-  const fmtDate = (v) => lang === "mr" ? mrDate(v) : enDate(v);
+  const fmt = (v) => v ? (lang === "mr" ? mrDate(v) : enDate(v)) : null;
+  const opensAt  = fmt(status.opensAt) ?? fmt(settings.registration?.opens_at);
+  const closesAt = fmt(settings.registration?.closes_at);
   return (
     <div className="card-light closed-notice" role="status">
       <CalendarClock aria-hidden="true" />
@@ -30,8 +34,8 @@ function ClosedNotice({ status }) {
       <p>
         {notStarted
           ? t(
-              `Online registration for Durgotsav will begin from ${fmtDate(status.opensAt)}. Meanwhile, start preparing your fort and read the guidelines below.`,
-              `दुर्गोत्सवासाठी ऑनलाइन नोंदणी ${fmtDate(status.opensAt)} पासून सुरू होईल. तोपर्यंत दुर्गाची तयारी सुरू करा आणि खालील संहिता वाचा.`
+              `Online registration for Durgotsav will begin from ${opensAt}${closesAt ? ` to ${closesAt}` : ""}. Meanwhile, start preparing your fort and read the guidelines below.`,
+              `दुर्गोत्सवासाठी ऑनलाइन नोंदणी ${opensAt}${closesAt ? ` ते ${closesAt}` : ""} दरम्यान सुरू होईल. तोपर्यंत दुर्गाची तयारी सुरू करा आणि खालील संहिता वाचा.`
             )
           : settings.registration?.note || t("Check the Updates page for registration updates.", "नोंदणीबाबतच्या अद्यतनांसाठी अपडेट्स पान पाहा.")}
       </p>
@@ -103,7 +107,7 @@ export default function Participate() {
             </p>
           </div>
           <div id="register" className="participate-form">
-            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : status.open ? <RegistrationForm /> : <ClosedNotice status={status} />}
+            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : (FORCE_OPEN || status.open) ? <RegistrationForm /> : <ClosedNotice status={status} />}
           </div>
         </div>
       </section>

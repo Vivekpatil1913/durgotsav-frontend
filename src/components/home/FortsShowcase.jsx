@@ -69,7 +69,7 @@ export function FortsShowcase({ forts = [] }) {
         <div className="container section-head__row">
           {/* plain div: GSAP re-parents the pinned section, which breaks in-view reveals */}
           <div className="section-head">
-            <span className="eyebrow">{settings.initiative?.unesco_title || "Maratha Military Landscapes of India"}</span>
+            <span className="eyebrow">{t(settings.initiative?.unesco_title || "Maratha Military Landscapes of India", "मराठा मिलिटरी लँडस्केप्स ऑफ इंडिया")}</span>
             <h2 id="forts-title">{t("Twelve forts on the UNESCO World Heritage List", "युनेस्को जागतिक वारसा यादीतील बारा दुर्ग")}</h2>
             <p>{t(
               "These twelve forts, which bear witness to the prowess of Shiva Chhatrapati, were granted the status of World Heritage Sites in 2025. Build a replica of one of these forts in your yard.",

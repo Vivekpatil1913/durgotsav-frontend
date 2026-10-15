@@ -1,20 +1,31 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, ImagePlus, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useApi } from "../../hooks/useApi.js";
 import { http, toApiError } from "../../lib/api.js";
-import { PARTICIPANT_TYPES, PARTICIPANT_TYPES_EN } from "../../lib/format.js";
 import { MAX_UPLOAD_MB, preparePhoto } from "../../lib/image.js";
-import { digitsOnly, Field } from "./fields.jsx";
+import { CustomSelect, digitsOnly, Field } from "./fields.jsx";
 import "./registration.css";
 
 const ORG_TYPES = new Set(["housing_society", "organization", "group", "school", "college"]);
-const EMPTY = { participant_type: "individual", name: "", organization_name: "", phone: "", email: "", district_id: "", city: "", fort_id: "", replica_notes: "", consent: false, website: "" };
+
+// Slot 0 is the required main photo, slot 1 an optional second view. Server fields: photo, photo_2.
+const MAX_PHOTOS = 2;
+const PHOTO_FIELDS = ["photo", "photo_2"];
+const NO_PHOTOS = [null, null];
+
+// Explicit dropdown choice for a fort outside the list; sent to the API as no fort_id.
+const OTHER_FORT = "other";
+
+const NOTES_MIN = 2;
+const NOTES_MAX = 300;
+
+const EMPTY = { participant_type: "individual", division_id: "", name: "", organization_name: "", phone: "", email: "", district_id: "", taluka_id: "", fort_id: "", replica_notes: "", consent: false, website: "" };
 const STEP_FIELDS = [
-  ["participant_type", "name", "organization_name", "phone", "email", "district_id", "city"],
-  ["fort_id", "replica_notes", "photo"],
+  ["participant_type", "division_id", "name", "organization_name", "phone", "email", "district_id", "taluka_id"],
+  ["fort_id", "replica_notes", "photo", "photo_2"],
   ["consent"],
 ];
 
@@ -24,17 +35,30 @@ const newSubmissionId = () =>
   globalThis.crypto?.randomUUID?.() ??
   "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (c ^ (Math.random() * 16) >> (c / 4)).toString(16));
 
-function validate(step, v, photo, t) {
+function validate(step, v, photos, t) {
   const e = {};
   if (step === 0) {
+    if (!v.division_id) e.division_id = t("Please select your division.", "आपला विभाग निवडा.");
     if (v.name.trim().length < 2) e.name = t("Please enter your full name.", "कृपया पूर्ण नाव लिहा.");
     if (ORG_TYPES.has(v.participant_type) && !v.organization_name.trim()) e.organization_name = t("Enter the name of the organisation / school.", "संस्थेचे / शाळेचे नाव लिहा.");
     if (!/^[6-9]\d{9}$/.test(v.phone)) e.phone = t("Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).", "१० अंकी मोबाईल क्रमांक लिहा (६, ७, ८ किंवा ९ ने सुरू होणारा).");
     if (!v.email.trim()) e.email = t("Please enter your email address.", "ईमेल पत्ता लिहा.");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = t("Email address is invalid.", "ईमेल पत्ता योग्य नाही.");
     if (!v.district_id) e.district_id = t("Please select your district.", "आपला जिल्हा निवडा.");
+    if (!v.taluka_id) e.taluka_id = t("Please select your taluka.", "आपला तालुका निवडा.");
   }
-  if (step === 1 && !photo) e.photo = t("Please select a photo of yourself with your replica.", "प्रतिकृतीसोबतचे आपले छायाचित्र निवडा.");
+  if (step === 1) {
+    if (!v.fort_id) e.fort_id = t("Please select the fort your replica is based on.", "आपली प्रतिकृती कोणत्या दुर्गाची आहे ते निवडा.");
+    const [main, second] = photos;
+    if (!main) e.photo = t("Please select a photo of yourself with your replica.", "प्रतिकृतीसोबतचे आपले छायाचित्र निवडा.");
+    else if (second && second.file.size === main.file.size && second.file.name === main.file.name) {
+      e.photo_2 = t("Please choose two different photos.", "कृपया दोन वेगवेगळी छायाचित्रे निवडा.");
+    }
+    // optional, but if filled it must be a real description
+    const notes = v.replica_notes.trim();
+    if (notes && notes.length < NOTES_MIN) e.replica_notes = t(`Please write at least ${NOTES_MIN} characters, or leave it blank.`, `किमान ${NOTES_MIN} अक्षरे लिहा, किंवा रिकामे ठेवा.`);
+    else if (notes.length > NOTES_MAX) e.replica_notes = t(`Please keep it within ${NOTES_MAX} characters.`, `कमाल ${NOTES_MAX} अक्षरांत लिहा.`);
+  }
   if (step === 2 && !v.consent) e.consent = t("You must accept the rules to proceed.", "पुढे जाण्यासाठी नियम मान्य करणे आवश्यक आहे.");
   return e;
 }
@@ -42,18 +66,23 @@ function validate(step, v, photo, t) {
 export function RegistrationForm() {
   const t = useT();
   const { lang } = useLang();
+  const divisions = useApi("/divisions").data?.data ?? [];
   const districts = useApi("/districts").data?.data ?? [];
+  const talukas = useApi("/talukas").data?.data ?? [];
   const forts = useApi("/forts").data?.data ?? [];
   const [step, setStep] = useState(0);
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
-  const [photo, setPhoto] = useState(null);
-  const [preparing, setPreparing] = useState(false);
+  const [photos, setPhotos] = useState(NO_PHOTOS);
+  const [preparing, setPreparing] = useState(null); // slot index being processed, or null
   const [progress, setProgress] = useState(null);
   const [formError, setFormError] = useState("");
   const [result, setResult] = useState(null);
   const topRef = useRef(null);
   const fileRef = useRef(null);
+  const targetSlot = useRef(0); // which slot the hidden file input is currently filling
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
   const submissionId = useRef(newSubmissionId());
 
   const STEPS = [
@@ -61,9 +90,8 @@ export function RegistrationForm() {
     t("Fort & Photo", "दुर्ग व छायाचित्र"),
     t("Review", "पुनरावलोकन"),
   ];
-  const participantTypes = lang === "mr" ? PARTICIPANT_TYPES : PARTICIPANT_TYPES_EN;
-
-  useEffect(() => () => photo && URL.revokeObjectURL(photo.preview), [photo]);
+  // Previews are revoked when replaced/removed; this frees whatever is left on unmount.
+  useEffect(() => () => photosRef.current.forEach((p) => p && URL.revokeObjectURL(p.preview)), []);
 
   const set = (name) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -71,27 +99,51 @@ export function RegistrationForm() {
     if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
   };
 
-  async function onPhoto(file) {
-    if (!file) return;
-    setPreparing(true);
-    setErrors((er) => ({ ...er, photo: undefined }));
+  const clearPhotoErrors = () => setErrors((er) => ({ ...er, photo: undefined, photo_2: undefined }));
+
+  async function placePhoto(file, slot) {
+    setPreparing(slot);
+    clearPhotoErrors();
     try {
-      if (photo) URL.revokeObjectURL(photo.preview);
-      setPhoto(await preparePhoto(file));
+      const prepared = await preparePhoto(file);
+      const old = photosRef.current[slot];
+      if (old) URL.revokeObjectURL(old.preview);
+      setPhotos((ps) => ps.map((p, i) => (i === slot ? prepared : p)));
     } catch (err) {
-      setPhoto(null);
-      setErrors((er) => ({ ...er, photo: err.message }));
+      setErrors((er) => ({ ...er, [PHOTO_FIELDS[slot]]: err.message }));
     } finally {
-      setPreparing(false);
-      if (fileRef.current) fileRef.current.value = "";
+      setPreparing(null);
     }
   }
 
+  // Fills `slot` with the first file; a second picked/dropped file goes to the other slot if it is empty.
+  async function addPhotos(fileList, slot) {
+    const files = Array.from(fileList ?? []).slice(0, MAX_PHOTOS);
+    if (fileRef.current) fileRef.current.value = "";
+    if (!files.length || preparing !== null) return;
+    const other = 1 - slot;
+    const targets = files.length > 1 && !photosRef.current[other] ? [slot, other] : [slot];
+    for (const [i, target] of targets.entries()) await placePhoto(files[i], target);
+  }
+
+  function removePhoto(slot) {
+    const old = photos[slot];
+    if (old) URL.revokeObjectURL(old.preview);
+    // removing the main photo promotes the second one, so slot 0 is always the filled one
+    setPhotos(([main, second]) => (slot === 0 ? [second, null] : [main, null]));
+    clearPhotoErrors();
+  }
+
+  function pickPhoto(slot) {
+    targetSlot.current = slot;
+    fileRef.current?.click();
+  }
+
   const focusFirstError = (errs) =>
-    requestAnimationFrame(() => document.querySelector(`[data-field="${Object.keys(errs)[0]}"] input, [data-field="${Object.keys(errs)[0]}"] select, [data-field="${Object.keys(errs)[0]}"] button`)?.focus());
+    requestAnimationFrame(() => document.querySelector(`[data-field="${Object.keys(errs)[0]}"] input, [data-field="${Object.keys(errs)[0]}"] select, [data-field="${Object.keys(errs)[0]}"] textarea, [data-field="${Object.keys(errs)[0]}"] button`)?.focus());
 
   function next() {
-    const errs = validate(step, values, photo, t);
+    const errs = validate(step, values, photos, t);
     setErrors(errs);
     if (Object.keys(errs).length) return focusFirstError(errs);
     setStep((s) => s + 1);
@@ -102,7 +154,7 @@ export function RegistrationForm() {
     e.preventDefault();
     if (progress !== null) return; // a submit is already in flight (Enter key while uploading)
     if (step < 2) return next();
-    const errs = validate(2, values, photo, t);
+    const errs = validate(2, values, photos, t);
     setErrors(errs);
     if (Object.keys(errs).length) return focusFirstError(errs);
 
@@ -114,13 +166,14 @@ export function RegistrationForm() {
     body.append("email", values.email.trim());
     body.append("country", "India");
     body.append("district_id", values.district_id);
-    if (values.city) body.append("city", values.city.trim());
-    if (values.fort_id) body.append("fort_id", values.fort_id);
+    if (values.division_id) body.append("division_id", values.division_id);
+    if (values.taluka_id) body.append("taluka_id", values.taluka_id);
+    if (values.fort_id && values.fort_id !== OTHER_FORT) body.append("fort_id", values.fort_id);
     if (values.replica_notes) body.append("replica_notes", values.replica_notes.trim());
     body.append("consent", "true");
     body.append("website", values.website);
     body.append("submission_id", submissionId.current);
-    body.append("photo", photo.file);
+    photos.forEach((p, i) => p && body.append(PHOTO_FIELDS[i], p.file));
 
     setFormError("");
     setProgress(0);
@@ -145,7 +198,19 @@ export function RegistrationForm() {
     }
   }
 
-  if (result) return <Success result={result} onReset={() => { submissionId.current = newSubmissionId(); setResult(null); setValues(EMPTY); setPhoto(null); setStep(0); }} />;
+  function removeAllPhotos() {
+    photos.forEach((p) => p && URL.revokeObjectURL(p.preview));
+    setPhotos(NO_PHOTOS);
+  }
+
+  if (result) return <Success result={result} onReset={() => { submissionId.current = newSubmissionId(); setResult(null); setValues(EMPTY); removeAllPhotos(); setStep(0); }} />;
+
+  const filteredDistricts = values.division_id
+    ? districts.filter((d) => String(d.division_id) === String(values.division_id))
+    : [];
+  const filteredTalukas = values.district_id
+    ? talukas.filter((tk) => String(tk.district_id) === String(values.district_id))
+    : [];
 
   const fortName = forts.find((f) => String(f.id) === String(values.fort_id));
   const fortLabel = fortName ? (lang === "mr" ? fortName.name_mr : (fortName.name_en || fortName.name_mr)) : null;
@@ -183,17 +248,6 @@ export function RegistrationForm() {
         >
           {step === 0 && (
             <div className="form-grid form-grid--2">
-              <fieldset className="span-2 type-picker" data-field="participant_type">
-                <legend className="field__label">{t("Participation Type", "सहभागाचा प्रकार")}</legend>
-                <div className="type-picker__options">
-                  {Object.entries(participantTypes).map(([key, label]) => (
-                    <label key={key} className={`type-option ${values.participant_type === key ? "is-checked" : ""}`}>
-                      <input type="radio" name="participant_type" value={key} checked={values.participant_type === key} onChange={set("participant_type")} />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
               <div className="span-2" data-field="name">
                 <Field
                   label={ORG_TYPES.has(values.participant_type) ? t("Representative's Full Name", "प्रतिनिधीचे पूर्ण नाव") : t("Full Name", "पूर्ण नाव")}
@@ -231,19 +285,63 @@ export function RegistrationForm() {
                   {(p) => <input {...p} className="input" type="email" inputMode="email" value={values.email} onChange={set("email")} maxLength={160} autoComplete="email" />}
                 </Field>
               </div>
-              <div data-field="district_id">
-                <Field label={t("District", "जिल्हा")} required error={errors.district_id}>
+              <div data-field="division_id">
+                <Field label={t("Division", "विभाग")} required error={errors.division_id}>
                   {(p) => (
-                    <select {...p} className="select" value={values.district_id} onChange={set("district_id")}>
-                      <option value="">{t("Select District", "जिल्हा निवडा")}</option>
-                      {districts.map((d) => <option key={d.id} value={d.id}>{lang === "mr" ? d.name_mr : (d.name_en || d.name_mr)}</option>)}
-                    </select>
+                    <CustomSelect
+                      {...p}
+                      value={values.division_id}
+                      placeholder={t("Select Division", "विभाग निवडा")}
+                      options={divisions.map((div) => ({
+                        value: div.id,
+                        label: lang === "mr" ? (div.name_mr || div.name_en) : (div.name_en || div.name_mr),
+                      }))}
+                      onValueChange={(id) => {
+                        setValues((v) => ({ ...v, division_id: id, district_id: "", taluka_id: "" }));
+                        setErrors((er) => ({ ...er, division_id: undefined, district_id: undefined, taluka_id: undefined }));
+                      }}
+                    />
                   )}
                 </Field>
               </div>
-              <div data-field="city">
-                <Field label={t("City / Village", "शहर / गाव")}>
-                  {(p) => <input {...p} className="input" value={values.city} onChange={set("city")} maxLength={120} autoComplete="address-level2" />}
+              <div data-field="district_id">
+                <Field label={t("District", "जिल्हा")} required error={errors.district_id}>
+                  {(p) => (
+                    <CustomSelect
+                      {...p}
+                      value={values.district_id}
+                      placeholder={t("Select District", "जिल्हा निवडा")}
+                      options={filteredDistricts.map((d) => ({
+                        value: d.id,
+                        label: lang === "mr" ? d.name_mr : (d.name_en || d.name_mr),
+                      }))}
+                      onValueChange={(id) => {
+                        setValues((v) => ({ ...v, district_id: id, taluka_id: "" }));
+                        setErrors((er) => ({ ...er, district_id: undefined, taluka_id: undefined }));
+                      }}
+                      disabled={!values.division_id}
+                    />
+                  )}
+                </Field>
+              </div>
+              <div data-field="taluka_id">
+                <Field label={t("Taluka", "तालुका")} required error={errors.taluka_id}>
+                  {(p) => (
+                    <CustomSelect
+                      {...p}
+                      value={values.taluka_id}
+                      placeholder={t("Select Taluka", "तालुका निवडा")}
+                      options={filteredTalukas.map((tk) => ({
+                        value: tk.id,
+                        label: lang === "mr" ? tk.name_mr : (tk.name_en || tk.name_mr),
+                      }))}
+                      onValueChange={(id) => {
+                        setValues((v) => ({ ...v, taluka_id: id }));
+                        if (errors.taluka_id) setErrors((er) => ({ ...er, taluka_id: undefined }));
+                      }}
+                      disabled={!values.district_id}
+                    />
+                  )}
                 </Field>
               </div>
             </div>
@@ -254,55 +352,116 @@ export function RegistrationForm() {
               <div data-field="fort_id">
                 <Field
                   label={t("Which fort's replica did you build?", "आपण कोणत्या दुर्गाची प्रतिकृती बनवली?")}
-                  hint={t("Select a fort from the UNESCO list, or leave blank if it is another fort.", "युनेस्को यादीतील दुर्ग निवडा, किंवा इतर दुर्ग असल्यास रिकामे ठेवा.")}
+                  required
+                  error={errors.fort_id}
+                  hint={t("Select a fort from the UNESCO list, or choose “Other Fort / My Own Design”.", "युनेस्को यादीतील दुर्ग निवडा, किंवा “इतर दुर्ग / माझी कल्पना” निवडा.")}
                 >
                   {(p) => (
-                    <select {...p} className="select" value={values.fort_id} onChange={set("fort_id")}>
-                      <option value="">{t("Other Fort / My Own Design", "इतर दुर्ग / माझी कल्पना")}</option>
-                      {forts.map((f) => <option key={f.id} value={f.id}>{f.name_mr} ({f.name_en})</option>)}
-                    </select>
+                    <CustomSelect
+                      {...p}
+                      value={values.fort_id}
+                      placeholder={t("Select a fort", "दुर्ग निवडा")}
+                      options={[
+                        ...forts.map((f) => ({
+                          value: f.id,
+                          label: `${f.name_mr} (${f.name_en})`,
+                        })),
+                        { value: OTHER_FORT, label: t("Other Fort / My Own Design", "इतर दुर्ग / माझी कल्पना") },
+                      ]}
+                      onValueChange={(id) => {
+                        setValues((v) => ({ ...v, fort_id: id }));
+                        if (errors.fort_id) setErrors((er) => ({ ...er, fort_id: undefined }));
+                      }}
+                    />
                   )}
                 </Field>
               </div>
               <div data-field="photo">
                 <span className="field__label" id="photo-label">
-                  {t("Your photo with the replica", "प्रतिकृतीसोबतचे आपले छायाचित्र")}
+                  {t("Your photos with the replica", "प्रतिकृतीसोबतची आपली छायाचित्रे")}
                   <span className="req" aria-hidden="true">*</span>
                 </span>
-                <div
-                  className={`dropzone ${photo ? "has-photo" : ""} ${errors.photo ? "has-error" : ""}`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); onPhoto(e.dataTransfer.files?.[0]); }}
-                >
-                  {photo ? (
-                    <div className="dropzone__preview">
-                      <img src={photo.preview} alt={t("Selected photo", "निवडलेले छायाचित्र")} />
-                      <button type="button" className="btn btn--outline btn--sm" onClick={() => fileRef.current?.click()}>
-                        <RefreshCw aria-hidden="true" /> {t("Choose a different photo", "दुसरे छायाचित्र")}
-                      </button>
-                    </div>
-                  ) : (
-                    <button type="button" className="dropzone__empty" onClick={() => fileRef.current?.click()} aria-describedby="photo-rules">
-                      {preparing ? <Loader2 className="spin" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
-                      <strong>{preparing ? t("Preparing photo…", "छायाचित्र तयार करत आहे…") : t("Select or drag a photo here", "छायाचित्र निवडा किंवा येथे ओढा")}</strong>
-                      <span>{t("You can take a photo directly with your mobile camera.", "मोबाईलवर कॅमेराने थेट फोटो काढू शकता")}</span>
-                    </button>
-                  )}
-                  <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-labelledby="photo-label" onChange={(e) => onPhoto(e.target.files?.[0])} tabIndex={-1} />
+                <p className="photo-slots__hint">
+                  {t("Add up to 2 photos. The first is required; the second is optional (another angle or a close-up).", "जास्तीत जास्त २ छायाचित्रे जोडा. पहिले आवश्यक; दुसरे ऐच्छिक (दुसरा कोन किंवा जवळून काढलेले).")}
+                </p>
+                <div className="photo-slots">
+                  {photos.map((p, slot) => {
+                    const field = PHOTO_FIELDS[slot];
+                    const busy = preparing === slot;
+                    const locked = slot === 1 && !photos[0]; // fill the main photo first
+                    return (
+                      <div key={field} data-field={field} className="photo-slot">
+                        <span className="photo-slot__label">
+                          {slot === 0 ? t("Photo 1", "छायाचित्र १") : t("Photo 2 (optional)", "छायाचित्र २ (ऐच्छिक)")}
+                        </span>
+                        <div
+                          className={`dropzone ${p ? "has-photo" : ""} ${errors[field] ? "has-error" : ""} ${locked ? "is-locked" : ""}`}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => { e.preventDefault(); if (!locked) addPhotos(e.dataTransfer.files, slot); }}
+                        >
+                          {p ? (
+                            <div className="dropzone__preview">
+                              <img src={p.preview} alt={slot === 0 ? t("Selected photo", "निवडलेले छायाचित्र") : t("Selected second photo", "निवडलेले दुसरे छायाचित्र")} />
+                              <div className="dropzone__actions">
+                                <button type="button" className="btn btn--outline btn--sm" onClick={() => pickPhoto(slot)} disabled={preparing !== null}>
+                                  {busy ? <Loader2 className="spin" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />} {t("Change", "बदला")}
+                                </button>
+                                <button type="button" className="btn btn--outline btn--sm" onClick={() => removePhoto(slot)} disabled={preparing !== null}
+                                  aria-label={slot === 0 ? t("Remove photo 1", "छायाचित्र १ काढा") : t("Remove photo 2", "छायाचित्र २ काढा")}>
+                                  <Trash2 aria-hidden="true" /> {t("Remove", "काढा")}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button type="button" className="dropzone__empty" onClick={() => pickPhoto(slot)} disabled={locked || preparing !== null}
+                              aria-describedby="photo-rules" aria-invalid={errors[field] ? true : undefined}>
+                              {busy ? <Loader2 className="spin" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
+                              <strong>
+                                {busy
+                                  ? t("Preparing photo…", "छायाचित्र तयार करत आहे…")
+                                  : slot === 0
+                                    ? t("Select or drag photos here", "छायाचित्रे निवडा किंवा येथे ओढा")
+                                    : t("Add a second photo", "दुसरे छायाचित्र जोडा")}
+                              </strong>
+                              <span>
+                                {locked
+                                  ? t("Add the first photo before this one.", "आधी पहिले छायाचित्र जोडा.")
+                                  : t("You can take a photo directly with your mobile camera.", "मोबाईलवर कॅमेराने थेट फोटो काढू शकता")}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                        {errors[field] && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors[field]}</span>}
+                      </div>
+                    );
+                  })}
                 </div>
-                {errors.photo && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors.photo}</span>}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  className="sr-only"
+                  aria-labelledby="photo-label"
+                  onChange={(e) => addPhotos(e.target.files, targetSlot.current)}
+                  tabIndex={-1}
+                />
                 <ul className="photo-rules" id="photo-rules">
-                  <li>{t("Both you and your replica must be clearly visible in the photo.", "छायाचित्रात आपण व आपली प्रतिकृती दोन्ही स्पष्ट दिसावेत.")}</li>
-                  <li>{t("Only a photo of a replica you built yourself — no internet images or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचेच छायाचित्र — इंटरनेटवरील / फेरफार केलेले नको.")}</li>
-                  <li>JPG, PNG {t("or", "किंवा")} WebP · {t("Max", "कमाल")} {MAX_UPLOAD_MB} MB · {t("One registration per photo.", "एका छायाचित्राने एकच नोंदणी.")}</li>
+                  <li>{t("Both you and your replica must be clearly visible in the first photo.", "पहिल्या छायाचित्रात आपण व आपली प्रतिकृती दोन्ही स्पष्ट दिसावेत.")}</li>
+                  <li>{t("Only photos of a replica you built yourself — no internet images or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचीच छायाचित्रे — इंटरनेटवरील / फेरफार केलेली नकोत.")}</li>
+                  <li>JPG, PNG {t("or", "किंवा")} WebP · {t("Max", "कमाल")} {MAX_UPLOAD_MB} MB {t("each", "प्रत्येकी")} · {t("Up to 2 photos per registration.", "एका नोंदणीसाठी जास्तीत जास्त २ छायाचित्रे.")}</li>
                 </ul>
               </div>
               <div data-field="replica_notes">
                 <Field
                   label={t("Brief description of the replica (optional)", "प्रतिकृतीबद्दल थोडक्यात (ऐच्छिक)")}
-                  hint={t("Materials used, participating members, etc.", "वापरलेले साहित्य, सहभागी सदस्य इ.")}
+                  error={errors.replica_notes}
+                  hint={<>
+                    {t("Materials used, participating members, etc.", "वापरलेले साहित्य, सहभागी सदस्य इ.")}
+                    <span className="char-count" aria-live="polite">{values.replica_notes.length}/{NOTES_MAX}</span>
+                  </>}
                 >
-                  {(p) => <textarea {...p} className="textarea" value={values.replica_notes} onChange={set("replica_notes")} maxLength={500} />}
+                  {(p) => <textarea {...p} className="textarea" value={values.replica_notes} onChange={set("replica_notes")} maxLength={NOTES_MAX} />}
                 </Field>
               </div>
             </div>
@@ -311,14 +470,17 @@ export function RegistrationForm() {
           {step === 2 && (
             <div className="stack">
               <div className="review">
-                {photo && <img src={photo.preview} alt="" className="review__photo" />}
+                <div className="review__photos">
+                  {photos.filter(Boolean).map((p) => <img key={p.preview} src={p.preview} alt="" className="review__photo" />)}
+                </div>
                 <dl>
-                  <div><dt>{t("Type", "प्रकार")}</dt><dd>{participantTypes[values.participant_type]}</dd></div>
                   <div><dt>{t("Name", "नाव")}</dt><dd>{values.name}</dd></div>
                   {ORG_TYPES.has(values.participant_type) && <div><dt>{t("Organisation", "संस्था")}</dt><dd>{values.organization_name}</dd></div>}
                   <div><dt>{t("Mobile", "मोबाईल")}</dt><dd>{values.phone}</dd></div>
                   {values.email && <div><dt>{t("Email", "ईमेल")}</dt><dd>{values.email}</dd></div>}
-                  <div><dt>{t("Location", "ठिकाण")}</dt><dd>{[values.city, districtLabel].filter(Boolean).join(", ")}</dd></div>
+                  <div><dt>{t("Division", "विभाग")}</dt><dd>{(() => { const div = divisions.find((d) => String(d.id) === String(values.division_id)); return div ? (lang === "mr" ? div.name_mr || div.name_en : div.name_en || div.name_mr) : ""; })()}</dd></div>
+                  <div><dt>{t("District", "जिल्हा")}</dt><dd>{districtLabel}</dd></div>
+                  {values.taluka_id && <div><dt>{t("Taluka", "तालुका")}</dt><dd>{(() => { const tk = talukas.find((t) => String(t.id) === String(values.taluka_id)); return tk ? (lang === "mr" ? tk.name_mr : (tk.name_en || tk.name_mr)) : ""; })()}</dd></div>}
                   <div><dt>{t("Fort", "दुर्ग")}</dt><dd>{fortLabel || t("Other Fort", "इतर दुर्ग")}</dd></div>
                 </dl>
               </div>
@@ -327,8 +489,8 @@ export function RegistrationForm() {
                   <input type="checkbox" checked={values.consent} onChange={set("consent")} aria-invalid={errors.consent ? true : undefined} />
                   <span>
                     {t(
-                      <>I have read the <Link to="/rules" target="_blank">Durgotsav Code</Link> and <Link to="/terms" target="_blank">Terms</Link>. This replica was built by me / us and the information provided is true. I consent to this photo being displayed in the Durgotsav album after verification.</>,
-                      <>मी <Link to="/rules" target="_blank">दुर्गोत्सव संहिता</Link> व <Link to="/terms" target="_blank">अटी</Link> वाचल्या आहेत. ही प्रतिकृती मी / आम्ही स्वतः तयार केली असून दिलेली माहिती सत्य आहे. पडताळणीनंतर हे छायाचित्र दुर्गोत्सव अल्बममध्ये प्रदर्शित करण्यास माझी संमती आहे.</>
+                      <>I have read the <Link to="/rules" target="_blank">Durgotsav Code</Link> and <Link to="/terms" target="_blank">Terms</Link>. This replica was built by me / us and the information provided is true. I consent to these photos being displayed in the Durgotsav album after verification.</>,
+                      <>मी <Link to="/rules" target="_blank">दुर्गोत्सव संहिता</Link> व <Link to="/terms" target="_blank">अटी</Link> वाचल्या आहेत. ही प्रतिकृती मी / आम्ही स्वतः तयार केली असून दिलेली माहिती सत्य आहे. पडताळणीनंतर ही छायाचित्रे दुर्गोत्सव अल्बममध्ये प्रदर्शित करण्यास माझी संमती आहे.</>
                     )}
                   </span>
                 </label>
@@ -352,7 +514,7 @@ export function RegistrationForm() {
           </button>
         ) : <span />}
         {step < 2 ? (
-          <button type="submit" className="btn btn--primary" disabled={preparing}>
+          <button type="submit" className="btn btn--primary" disabled={preparing !== null}>
             {t("Next", "पुढे")} <ArrowRight aria-hidden="true" />
           </button>
         ) : (
@@ -360,7 +522,7 @@ export function RegistrationForm() {
             {progress !== null
               ? <><Loader2 className="spin" aria-hidden="true" /> {progress < 100
                 ? t(`Uploading ${progress}%`, `अपलोड ${progress}%`)
-                : t("Saving your photo…", "छायाचित्र जतन करत आहे…")}</>
+                : t("Saving your photos…", "छायाचित्रे जतन करत आहे…")}</>
               : <>{t("Complete Registration", "नोंदणी पूर्ण करा")} <Check aria-hidden="true" /></>}
           </button>
         )}

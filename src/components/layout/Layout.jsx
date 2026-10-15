@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { useT } from "../../context/LanguageContext.jsx";
+import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { scrollToElement, scrollToTop } from "../../lib/smoothScroll.js";
 import { Footer } from "./Footer.jsx";
@@ -48,9 +48,14 @@ export function Layout() {
   const reduce = useReducedMotion();
   const { settings } = useSite();
   const mainRef = useRef(null);
+  const { lang } = useLang();
   useScrollRestoration();
 
   const t = useT();
+
+  useEffect(() => {
+    document.documentElement.lang = lang === "mr" ? "mr-IN" : "en";
+  }, [lang]);
   return (
     <>
       <a href="#main" className="skip-link">{t("Skip to main content", "मुख्य मजकुराकडे जा")}</a>

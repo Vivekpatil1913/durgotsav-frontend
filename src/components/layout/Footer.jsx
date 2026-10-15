@@ -49,9 +49,9 @@ export function Footer() {
         <div className="site-footer__top">
           <div className="site-footer__brand">
             <div className="site-footer__brand-header">
-              <img src="/brand/emblem-white.webp" alt={t("Government of Maharashtra", "महाराष्ट्र शासन")} loading="lazy" />
-              <img src="/brand/amrut-white.webp" alt={t("AMRUT", "अमृत")} loading="lazy" />
-              <img src="/brand/durgotsav-logo-320.webp" alt={t("Amrut Durgotsav 2026 Logo", "अमृत दुर्गोत्सव २०२६ बोधचिन्ह")} loading="lazy" />
+              <img src="/brand/emblem-white.webp" alt={t("Government of Maharashtra", "महाराष्ट्र शासन")} width="40" height="48" loading="lazy" />
+              <img src="/brand/amrut-white.webp" alt={t("AMRUT", "अमृत")} width="96" height="48" loading="lazy" />
+              <img src="/brand/durgotsav-logo-320.webp" alt={t("Amrut Durgotsav 2026 Logo", "अमृत दुर्गोत्सव २०२६ बोधचिन्ह")} width="44" height="44" loading="lazy" />
               <span className="site-footer__brand-title">{t("Durgotsav 2026", "दुर्गोत्सव २०२६")}</span>
             </div>
             <p className="site-footer__tagline">{t("Let's Build a Fort!", "चला, दुर्ग बनवूया!")}</p>

@@ -97,9 +97,9 @@ export function Header() {
     <header className={`site-header ${scrolled || open ? "is-solid" : ""}`}>
       <div className="site-header__bar">
         <Link to="/" className="brand" aria-label={`Amrut Durgotsav ${year} — home`}>
-          <img className="brand__emblem" src="/brand/emblem-white.webp" alt="" width="40" height="48" />
-          <img className="brand__amrut" src="/brand/amrut-white.webp" alt="" width="96" height="48" />
-          <img className="brand__logo" src="/brand/durgotsav-logo-320.webp" alt="" width="44" height="44" />
+          <img className="brand__emblem" src="/brand/emblem-white.webp" alt={t("Government of Maharashtra Emblem", "महाराष्ट्र शासनाचे बोधचिन्ह")} width="40" height="48" />
+          <img className="brand__amrut" src="/brand/amrut-white.webp" alt="AMRUT" width="96" height="48" />
+          <img className="brand__logo" src="/brand/durgotsav-logo-320.webp" alt={t("Amrut Durgotsav 2026 Logo", "अमृत दुर्गोत्सव २०२६ बोधचिन्ह")} width="44" height="44" />
           <span className="brand__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
         </Link>
 
