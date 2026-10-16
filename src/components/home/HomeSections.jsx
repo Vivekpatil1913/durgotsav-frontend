@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Award, Camera, ChevronLeft, ChevronRight, Hammer, Megaphone, ShieldCheck, Upload, Users, ZoomIn } from "lucide-react";
+import { Award, Camera, ChevronLeft, ChevronRight, Hammer, Megaphone, ShieldCheck, Upload, Users, X, ZoomIn } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Autoplay, A11y } from "swiper/modules";
@@ -8,6 +8,7 @@ import "swiper/css";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { assetUrl, enDate, mrDate } from "../../lib/format.js";
+import { lockScroll } from "../../lib/smoothScroll.js";
 import { Counter } from "../ui/Counter.jsx";
 import { Img } from "../ui/Img.jsx";
 import { Lightbox } from "../ui/Lightbox.jsx";
@@ -449,19 +450,75 @@ export function WorldRecord() {
 }
 
 // ---------------------------------------------------------------- dignitaries
-function Quote({ text }) {
+function Quote({ text, onMore }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const long = text.length > 420;
+  const ref = useRef(null);
+  const [long, setLong] = useState(false);
+  // Card width changes with slidesPerView, so measure the clamp instead of guessing by length.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // half-line tolerance: Devanagari matras overflow the line box by a few px even when nothing is cut
+    const check = () => setLong(el.scrollHeight - el.clientHeight > parseFloat(getComputedStyle(el).lineHeight) / 2);
+    check();
+    // the web font swaps in after first paint and reflows the text without resizing the clamped box
+    document.fonts?.ready.then(check);
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text]);
   return (
     <div>
-      <blockquote className={long && !open ? "is-clamped" : undefined}>{text}</blockquote>
+      <blockquote ref={ref} className="is-clamped">{text}</blockquote>
       {long && (
-        <button type="button" className="voice__more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          {open ? t("Show less", "कमी दाखवा") : t("Read more", "अधिक वाचा")}
+        <button type="button" className="voice__more" aria-haspopup="dialog" onClick={onMore}>
+          {t("Read more", "अधिक वाचा")}
         </button>
       )}
     </div>
+  );
+}
+
+// Full message in a native <dialog>: showModal() gives focus trapping, Esc and inert background for free.
+function VoiceModal({ item, onClose }) {
+  const t = useT();
+  const ref = useRef(null);
+  useEffect(() => {
+    const dlg = ref.current;
+    if (!item || !dlg) return undefined;
+    dlg.showModal();
+    lockScroll(true);
+    return () => {
+      lockScroll(false);
+      if (dlg.open) dlg.close();
+    };
+  }, [item]);
+  if (!item) return null;
+  return (
+    <dialog
+      ref={ref}
+      className="voice-modal"
+      aria-labelledby="voice-modal-name"
+      onClose={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <figure className="voice voice-modal__card">
+        <button type="button" className="voice-modal__close" aria-label={t("Close", "बंद करा")} onClick={onClose}>
+          <X size={20} aria-hidden="true" />
+        </button>
+        <span className="voice__mark" aria-hidden="true">"</span>
+        <blockquote className="voice-modal__text" data-lenis-prevent>{item.message}</blockquote>
+        <span className="voice__divider" aria-hidden="true"><span /><Lotus /><span /></span>
+        <figcaption>
+          {item.photo && <img src={assetUrl(item.photo)} alt="" width="96" height="96" />}
+          <span>
+            <strong id="voice-modal-name">{item.name}</strong>
+            <small>{item.designation}</small>
+          </span>
+        </figcaption>
+        <FortSketch />
+      </figure>
+    </dialog>
   );
 }
 
@@ -497,7 +554,10 @@ export function Voices({ testimonials = [] }) {
   const t = useT();
   const [swiper, setSwiper] = useState(null);
   const [nav, setNav] = useState({ active: 0, snaps: 1 });
+  const [reading, setReading] = useState(null);
   if (!testimonials.length) return null;
+  const openReading = (item) => { swiper?.autoplay?.stop(); setReading(item); };
+  const closeReading = () => { setReading(null); swiper?.autoplay?.start(); };
   const sync = (s) => setNav({ active: s.snapIndex, snaps: s.snapGrid.length });
   return (
     <section id="voices" className="section voices" aria-labelledby="voices-title">
@@ -522,9 +582,9 @@ export function Voices({ testimonials = [] }) {
         </Reveal>
         <Swiper
           modules={[A11y, Autoplay]}
-          spaceBetween={40}
+          spaceBetween={20}
           slidesPerView={1}
-          breakpoints={{ 900: { slidesPerView: 2 } }}
+          breakpoints={{ 720: { slidesPerView: 2, spaceBetween: 24 }, 1200: { slidesPerView: 3, spaceBetween: 28 } }}
           autoplay={{ delay: 9000, pauseOnMouseEnter: true, disableOnInteraction: true }}
           a11y={{ prevSlideMessage: t("Previous", "मागील"), nextSlideMessage: t("Next", "पुढील") }}
           onSwiper={(s) => { setSwiper(s); sync(s); }}
@@ -536,7 +596,7 @@ export function Voices({ testimonials = [] }) {
             <SwiperSlide key={t_item.id}>
               <figure className="voice">
                 <span className="voice__mark" aria-hidden="true">"</span>
-                <Quote text={t_item.message} />
+                <Quote text={t_item.message} onMore={() => openReading(t_item)} />
                 <span className="voice__divider" aria-hidden="true"><span /><Lotus /><span /></span>
                 <figcaption>
                   {t_item.photo && <img src={assetUrl(t_item.photo)} alt="" width="96" height="96" loading="lazy" />}
@@ -573,6 +633,7 @@ export function Voices({ testimonials = [] }) {
           </div>
         )}
       </div>
+      <VoiceModal item={reading} onClose={closeReading} />
     </section>
   );
 }

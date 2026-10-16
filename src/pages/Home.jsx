@@ -67,7 +67,10 @@ export default function Home() {
       <Seo jsonLd={jsonLd} />
       <Hero />
       <Story />
+      <WorldRecord />
+      <Voices testimonials={home.testimonials} />
       <Mission />
+      <Podcasts />
       <FortsShowcase forts={home.forts} />
       <ImportantDates />
       <section className="section section--tight surface-parchment">
@@ -76,11 +79,8 @@ export default function Home() {
         </div>
       </section>
       <FestivalBanner />
-      <WorldRecord />
-      <Voices testimonials={home.testimonials} />
       {/* No verified 2026 photos yet → show curated 2025 highlights instead */}
       {data && (home.gallery?.length ? <GalleryPreview photos={home.gallery} /> : <Highlights2025 limit={10} />)}
-      <Podcasts />
       <DurgotsavCta />
     </>
   );

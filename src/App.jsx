@@ -1,5 +1,5 @@
 import { lazy, useEffect } from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from "react-router-dom";
 import { Layout } from "./components/layout/Layout.jsx";
 import { RouteError } from "./components/layout/RouteError.jsx";
 import { LanguageProvider } from "./context/LanguageContext.jsx";
@@ -20,8 +20,16 @@ const Updates = lazy(() => import("./pages/Updates.jsx"));
 const Faq = lazy(() => import("./pages/Faq.jsx"));
 const Contact = lazy(() => import("./pages/Contact.jsx"));
 const ContentPage = lazy(() => import("./pages/ContentPage.jsx"));
+const ShivdurgAward = lazy(() => import("./pages/ShivdurgAward.jsx"));
+const ShivdurgNominate = lazy(() => import("./pages/ShivdurgNominate.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+
+// Earlier award URL (/amrut-shivdurg-…) → current one, keeping ?type= and #hash
+function AwardRedirect({ to }) {
+  const { search, hash } = useLocation();
+  return <Navigate to={`${to}${search}${hash}`} replace />;
+}
 
 const router = createBrowserRouter([
   {
@@ -41,6 +49,10 @@ const router = createBrowserRouter([
       { path: "faq", element: <Faq /> },
       { path: "contact", element: <Contact /> },
       { path: "dashboard", element: <Dashboard /> },
+      { path: "shivdurg-bhushan-puraskar-2026", element: <ShivdurgAward /> },
+      { path: "shivdurg-bhushan-puraskar-2026/nominate", element: <ShivdurgNominate /> },
+      { path: "amrut-shivdurg-bhushan-puraskar-2026", element: <AwardRedirect to="/shivdurg-bhushan-puraskar-2026" /> },
+      { path: "amrut-shivdurg-bhushan-puraskar-2026/nominate", element: <AwardRedirect to="/shivdurg-bhushan-puraskar-2026/nominate" /> },
       { path: "rules", element: <ContentPage slug="rules" /> },
       { path: "privacy", element: <ContentPage slug="privacy" /> },
       { path: "terms", element: <ContentPage slug="terms" /> },

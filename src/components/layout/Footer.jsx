@@ -1,8 +1,9 @@
-import { Instagram, Mail, MapPin, Phone, Youtube, Facebook, Linkedin, Twitter } from "lucide-react";
+import { ArrowRight, Instagram, Mail, MapPin, Phone, Youtube, Facebook, Linkedin, Twitter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { Divider } from "../ui/Ornament.jsx";
+import { VisitorCounter } from "./VisitorCounter.jsx";
 import "./footer.css";
 
 // lucide-react has no Google brand icon, so draw the "G" in the same outline style.
@@ -35,11 +36,9 @@ export function Footer() {
     [t("Quick Links", "त्वरित दुवे"), [
       ["/about",              t("Campaign Objectives", "मोहिमेचे उद्दिष्ट")],
       ["/participate",        t("How to Participate", "सहभाग कसा घ्यावा")],
-      ["/participate#register", t("Register", "नोंदणी")],
+      ["/shivdurg-bhushan-puraskar-2026", t("Shivdurg Bhushan Award", "शिवदुर्ग भूषण पुरस्कार")],
       ["/gallery",            t("Gallery", "गॅलरी")],
-      ["/videos",             t("Videos & Podcasts", "व्हिडिओ व पॉडकास्ट")],
       ["/faq",                t("FAQ", "प्रश्नोत्तरे")],
-      ["/contact",            t("Contact & Help", "संपर्क व मदत")],
     ]],
   ];
 
@@ -90,7 +89,20 @@ export function Footer() {
                 <li><MapPin size={16} aria-hidden="true" /><span>{lang === "mr" ? contact.address : (contact.address_en || contact.address)}</span></li>
               )}
             </ul>
+            <VisitorCounter />
           </div>
+        </div>
+
+        <div className="site-footer__cta">
+          <p className="site-footer__cta-text">
+            {t(
+              "“Come, let us preserve the heritage of our culture… let's take part in Amrut Durgotsav 2026!”",
+              "“चला, आपल्या संस्कृतीचा वारसा जपूया… अमृत दुर्गोत्सव २०२६ मध्ये सहभागी होऊया!”"
+            )}
+          </p>
+          <Link to="/participate" className="btn btn--primary site-footer__cta-btn">
+            {t("Participate Now", "सहभागी व्हा")} <ArrowRight size={18} aria-hidden="true" />
+          </Link>
         </div>
 
         <Divider className="site-footer__divider" />

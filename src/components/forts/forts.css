@@ -103,6 +103,43 @@
 .forts-showcase .section-head__row {
   margin-bottom: 0;
 }
+.forts-showcase__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+.forts-showcase__nav {
+  display: flex;
+  gap: 12px;
+}
+.forts-showcase__arrow {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgb(242 177 58 / 0.4);
+  border-radius: 50%;
+  background: rgb(246 236 220 / 0.04);
+  color: var(--gold-500);
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-out), background 0.2s, color 0.2s, border-color 0.2s;
+}
+.forts-showcase__arrow:hover:not(:disabled) {
+  background: var(--saffron-500);
+  border-color: var(--saffron-500);
+  color: #fff;
+  transform: translateY(-2px);
+}
+.forts-showcase__arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+@media (max-width: 767px) {
+  .forts-showcase__actions {
+    align-items: flex-start;
+  }
+}
 .forts-showcase__pin {
   display: grid;
   /* fixed-width column: the wide track must overflow, not stretch the grid */
@@ -141,36 +178,13 @@
   font-weight: 400;
 }
 @media (min-width: 1024px) {
-  .forts-showcase--pinned .forts-showcase__pin {
-    min-height: 100vh;
-    padding-top: var(--header-h);
-    align-content: center;
-  }
-  .forts-showcase--pinned .forts-showcase__track {
-    overflow: visible;
-    scroll-snap-type: none;
-    width: max-content;
-    justify-self: start;
+  .forts-showcase__track {
     padding-left: max(var(--gutter), calc((100vw - var(--container)) / 2));
+    scroll-padding-left: max(var(--gutter), calc((100vw - var(--container)) / 2));
   }
   .forts-showcase__track > * {
     flex-basis: 340px;
   }
-}
-.forts-showcase__progress {
-  height: 2px;
-  margin-inline: var(--gutter);
-  background: rgb(246 236 220 / 0.1);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.forts-showcase__progress span {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, var(--saffron-500), var(--gold-500));
-  transform-origin: 0 50%;
-  transform: scaleX(0);
 }
 
 /* ---------------------------------------------------------------- map */

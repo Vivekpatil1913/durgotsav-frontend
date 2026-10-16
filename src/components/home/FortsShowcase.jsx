@@ -1,6 +1,4 @@
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../../context/LanguageContext.jsx";
@@ -8,66 +6,39 @@ import { useSite } from "../../context/SiteContext.jsx";
 import { prefersReducedMotion } from "../../lib/smoothScroll.js";
 import { FortCard } from "../forts/FortCard.jsx";
 
-gsap.registerPlugin(ScrollTrigger);
-
-// Desktop (≥1024px, motion allowed): the section pins and the card track scrolls sideways with the page.
-// Touch / small screens / reduced motion: a native swipeable carousel with scroll-snap.
+// A native scroll-snap carousel: the page scrolls normally, cards move with the arrows or by swipe/trackpad
 export function FortsShowcase({ forts = [] }) {
   const { settings } = useSite();
   const t = useT();
-  const section = useRef(null);
   const track = useRef(null);
-  const [pinned, setPinned] = useState(false);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
 
-  useLayoutEffect(() => {
-    if (!forts.length) return undefined;
-    const mm = gsap.matchMedia();
-    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference) and (pointer: fine)", () => {
-      if (prefersReducedMotion()) return undefined;
-      setPinned(true);
-      const distance = () => track.current.scrollWidth - window.innerWidth;
-      const tween = gsap.to(track.current, {
-        x: () => -distance(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: section.current,
-          start: "top top",
-          end: () => `+=${distance()}`,
-          pin: true,
-          scrub: 0.6,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
-      gsap.to(".forts-showcase__progress span", {
-        scaleX: 1,
-        ease: "none",
-        scrollTrigger: { trigger: section.current, start: "top top", end: () => `+=${distance()}`, scrub: true },
-      });
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
-        setPinned(false);
-      };
-    });
-    return () => mm.revert();
-  }, [forts.length]);
+  // Enable/disable the arrows from the track's scroll position
+  const updateEdges = () => {
+    const el = track.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 2);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
+  };
 
   // Scroll-snap keeps the previously snapped card when forts load in front of it — always start at the first fort
   useLayoutEffect(() => {
     if (track.current) track.current.scrollLeft = 0;
+    updateEdges();
   }, [forts.length]);
 
-  // The pinned layout changes the track's width, so measurements must be redone after it renders
-  useLayoutEffect(() => {
-    if (pinned) ScrollTrigger.refresh();
-  }, [pinned]);
+  const go = (dir) => {
+    const el = track.current;
+    if (!el?.firstElementChild) return;
+    const step = el.firstElementChild.offsetWidth + (parseFloat(getComputedStyle(el).columnGap) || 0);
+    el.scrollBy({ left: dir * step, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  };
 
   return (
-    <section ref={section} className={`forts-showcase surface-night ${pinned ? "forts-showcase--pinned" : "section"}`} aria-labelledby="forts-title">
+    <section className="forts-showcase surface-night section" aria-labelledby="forts-title">
       <div className="forts-showcase__pin">
         <div className="container section-head__row">
-          {/* plain div: GSAP re-parents the pinned section, which breaks in-view reveals */}
           <div className="section-head">
             <span className="eyebrow">{t(settings.initiative?.unesco_title || "Maratha Military Landscapes of India", "मराठा मिलिटरी लँडस्केप्स ऑफ इंडिया")}</span>
             <h2 id="forts-title">{t("Twelve forts on the UNESCO World Heritage List", "युनेस्को जागतिक वारसा यादीतील बारा दुर्ग")}</h2>
@@ -76,10 +47,22 @@ export function FortsShowcase({ forts = [] }) {
               "शिवछत्रपतींच्या पराक्रमाचे साक्षीदार असलेल्या या बारा दुर्गांना २०२५ मध्ये जागतिक वारसा स्थळांचा दर्जा मिळाला. आपल्या अंगणात यापैकी एका दुर्गाची प्रतिकृती बनवा."
             )}</p>
           </div>
-          <Link to="/forts" className="link-arrow">{t("View all forts on the map", "सर्व दुर्ग नकाशावर पाहा")} <ArrowRight aria-hidden="true" /></Link>
+          <div className="forts-showcase__actions">
+            <Link to="/forts" className="link-arrow">{t("View all forts on the map", "सर्व दुर्ग नकाशावर पाहा")} <ArrowRight aria-hidden="true" /></Link>
+            {forts.length > 1 && (
+              <div className="forts-showcase__nav">
+                <button type="button" className="forts-showcase__arrow" aria-label={t("Previous fort", "मागील दुर्ग")} onClick={() => go(-1)} disabled={atStart}>
+                  <ChevronLeft size={22} aria-hidden="true" />
+                </button>
+                <button type="button" className="forts-showcase__arrow" aria-label={t("Next fort", "पुढील दुर्ग")} onClick={() => go(1)} disabled={atEnd}>
+                  <ChevronRight size={22} aria-hidden="true" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="forts-showcase__track" ref={track} role="list">
+        <div className="forts-showcase__track" ref={track} role="list" onScroll={updateEdges}>
           {forts.map((fort, i) => (
             <div role="listitem" key={fort.slug}>
               <FortCard fort={fort} index={i} />
@@ -93,7 +76,6 @@ export function FortsShowcase({ forts = [] }) {
             </div>
           )}
         </div>
-        {pinned && <div className="forts-showcase__progress" aria-hidden="true"><span /></div>}
       </div>
     </section>
   );

@@ -16,6 +16,7 @@ const NAV = [
 ];
 
 const MOBILE_EXTRA = [
+  { to: "/shivdurg-bhushan-puraskar-2026", label: { en: "Shivdurg Bhushan Award", mr: "शिवदुर्ग भूषण पुरस्कार" } },
   { to: "/forts",       label: { en: "12 Forts", mr: "१२ दुर्ग" } },
   { to: "/videos",      label: { en: "Videos & Podcasts", mr: "व्हिडिओ व पॉडकास्ट" } },
   { to: "/faq",         label: { en: "FAQ", mr: "प्रश्नोत्तरे" } },

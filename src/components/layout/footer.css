@@ -143,6 +143,53 @@
   background: rgb(194 100 28 / 0.15);
   color: var(--gold-300);
 }
+/* ── Call-to-action banner ────────────────────────────── */
+.site-footer__cta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-7, 2.5rem);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid rgb(242 177 58 / 0.35);
+  border-left: 4px solid var(--saffron-500);
+  border-radius: var(--radius-lg, 16px);
+  background:
+    linear-gradient(100deg, rgb(232 120 30 / 0.18), rgb(242 177 58 / 0.06) 60%, transparent),
+    rgb(246 236 220 / 0.03);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+.site-footer__cta-text {
+  flex: 1 1 32ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 0.95rem + 0.9vw, 1.6rem);
+  line-height: 1.45;
+  color: var(--gold-300);
+  text-wrap: balance;
+}
+.site-footer__cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.site-footer .site-footer__cta-btn,
+.site-footer .site-footer__cta-btn:hover {
+  color: #fff;
+}
+@media (max-width: 599px) {
+  .site-footer__cta {
+    padding: var(--space-4);
+  }
+  .site-footer__cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ── Divider ────────────────────────────────── */
 .site-footer__divider {
   margin: var(--space-6) auto var(--space-4);
@@ -170,4 +217,34 @@
 }
 .site-footer__bottom a:hover {
   color: var(--gold-300);
+}
+
+/* Visitor counter */
+.visitor-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgb(242 177 58 / 0.35);
+  border-radius: 999px;
+  background: rgb(242 177 58 / 0.08);
+  color: rgb(246 236 220 / 0.85);
+}
+.visitor-counter svg {
+  color: var(--gold-400);
+  flex-shrink: 0;
+}
+.visitor-counter__value {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--gold-300);
+  font-variant-numeric: tabular-nums;
+}
+.visitor-counter__today {
+  padding-left: var(--space-3);
+  border-left: 1px solid rgb(246 236 220 / 0.2);
+  color: rgb(246 236 220 / 0.7);
+  font-size: var(--text-xs);
 }

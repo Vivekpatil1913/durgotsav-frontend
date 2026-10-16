@@ -1016,6 +1016,94 @@ section.story {
   pointer-events: none;
 }
 
+/* Three cards per view (matches the Swiper 1200px breakpoint): the quote mark moves above
+   the text so the narrower card keeps a comfortable line length. */
+@media (min-width: 1200px) {
+  .voice {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    padding: 1.5rem 1.6rem 1.35rem;
+  }
+  .voice::before {
+    top: 24px;
+  }
+  .voice__mark {
+    font-size: 3.25rem;
+    line-height: 0.6;
+    margin-bottom: 0.35rem;
+  }
+  .voice blockquote.is-clamped {
+    -webkit-line-clamp: 8;
+  }
+  .voice figcaption {
+    gap: var(--space-4);
+  }
+  .voice img {
+    width: 68px;
+    height: 68px;
+  }
+  .voice strong {
+    font-size: var(--text-base);
+  }
+  .voice__watermark {
+    width: 100px;
+  }
+}
+
+/* Read-more modal: the same card, full text, centred over a dimmed backdrop. */
+.voice-modal {
+  width: min(680px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+.voice-modal::backdrop {
+  background: rgb(26 15 8 / 0.62);
+  backdrop-filter: blur(4px);
+}
+.voice-modal[open] {
+  animation: voice-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes voice-modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+}
+.voice-modal__card {
+  max-height: calc(100dvh - 2rem);
+  height: auto;
+  grid-template-rows: auto auto auto;
+  background: rgb(255 252 247);
+}
+.voice-modal__text {
+  overflow-y: auto;
+  max-height: calc(100dvh - 18rem);
+  padding-right: 6px;
+  overscroll-behavior: contain;
+}
+.voice-modal__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgb(232 120 30 / 0.3);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--bronze-600);
+  transition: background 0.2s, color 0.2s;
+}
+.voice-modal__close:hover {
+  background: var(--saffron-500);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-modal[open] { animation: none; }
+}
 .voices__nav {
   display: flex;
   align-items: center;
@@ -1342,6 +1430,46 @@ section.idates {
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(1rem, 2vw, 2rem);
   align-items: stretch;
+}
+
+/* One card on its own (e.g. Shiv Pratap Din on the award page) */
+.idates--single .idates__cols {
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+}
+
+/* Award page variant: a photo band (the award's fort-sunset image) framed by glowing gold edges, so it reads as
+   its own section between the plain dark sections around it. Smaller title for the longer name. */
+.idates--award {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 55% 65% at 50% 60%, rgb(232 120 30 / 0.28), transparent 70%),
+    linear-gradient(180deg, rgb(13 8 4 / 0.82), rgb(13 8 4 / 0.5) 45%, rgb(13 8 4 / 0.9)),
+    url("/images/award/fort-sunset-1280.webp") center 35% / cover no-repeat,
+    var(--night-950);
+  box-shadow:
+    inset 0 40px 60px -40px rgb(0 0 0 / 0.9),
+    inset 0 -40px 60px -40px rgb(0 0 0 / 0.9);
+}
+.idates--award::before,
+.idates--award::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--bronze-500) 20%, var(--gold-500) 50%, var(--bronze-500) 80%, transparent);
+  box-shadow: 0 0 18px 2px rgb(242 177 58 / 0.45);
+  z-index: 1;
+}
+.idates--award::before { top: 0; }
+.idates--award::after { bottom: 0; }
+.idates--award .idates__title {
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3.6rem);
+}
+.idates--award .idates__date-pill {
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
 }
 
 /* ── each card: vertical stack, centered content ── */

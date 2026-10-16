@@ -5,10 +5,11 @@ import { mr } from "../../lib/format.js";
 import { Mandala } from "./Ornament.jsx";
 import { Reveal } from "./Reveal.jsx";
 
-export function PageHero({ eyebrow, title, lead, crumbs = [], children }) {
+export function PageHero({ eyebrow, title, lead, crumbs = [], children, className = "", media }) {
   const t = useT();
   return (
-    <section className="page-hero">
+    <section className={`page-hero ${className}`.trim()}>
+      {media && <div className="page-hero__media" aria-hidden="true">{media}</div>}
       <div className="page-hero__ornament" aria-hidden="true"><Mandala spin /></div>
       <div className="container">
         <nav aria-label="breadcrumb">
