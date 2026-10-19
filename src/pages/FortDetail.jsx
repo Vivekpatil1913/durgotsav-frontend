@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FortVisual } from "../components/forts/FortCard.jsx";
-import { FortMapEmbed, FortWikiPhotos, useWikiHeroImage } from "../components/forts/FortExtras.jsx";
+import { FortMapEmbed, FortPlan, FortWikiPhotos, useWikiHeroImage } from "../components/forts/FortExtras.jsx";
 import "../components/forts/forts.css";
 import { Seo } from "../components/seo/Seo.jsx";
 import { Img } from "../components/ui/Img.jsx";
@@ -127,6 +127,8 @@ export default function FortDetail() {
           </Reveal>
         </div>
       </section>
+
+      <FortPlan slug={fort.slug} nameEn={fort.name_en} nameMr={fort.name_mr} />
 
       <section className="section section--tight surface-parchment">
         <div className="container container--narrow">

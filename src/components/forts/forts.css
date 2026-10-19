@@ -287,6 +287,116 @@
   .fort-gmap-wrap { aspect-ratio: 4 / 3; }
 }
 
+/* ---------------------------------------------------------------- fort plan */
+.section.fort-plan {
+  padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+  padding-bottom: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+}
+.fort-plan__grid {
+  display: grid;
+  max-width: 540px;
+  margin-inline: auto;
+  gap: clamp(1rem, 2.5vw, 2rem);
+}
+.fort-plan__grid--multi {
+  max-width: 900px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.fort-plan__plate {
+  position: relative;
+  display: grid;
+  padding: clamp(0.6rem, 1.5vw, 0.9rem);
+  border: 1px solid rgb(242 177 58 / 0.55);
+  border-radius: var(--radius-lg, 14px);
+  background: linear-gradient(160deg, #fffaf0, var(--parchment-200));
+  box-shadow: 0 10px 30px rgb(74 53 36 / 0.14), inset 0 0 0 4px #fffaf0, inset 0 0 0 5px rgb(242 177 58 / 0.35);
+  color: var(--ink-900);
+  text-align: left;
+  cursor: zoom-in;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+/* Gilded corner brackets */
+.fort-plan__plate::before,
+.fort-plan__plate::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--gold-500);
+  pointer-events: none;
+}
+.fort-plan__plate::before { top: 6px; left: 6px; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
+.fort-plan__plate::after { bottom: 6px; right: 6px; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
+.fort-plan__plate:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgb(74 53 36 / 0.22), inset 0 0 0 4px #fffaf0, inset 0 0 0 5px rgb(242 177 58 / 0.55);
+}
+.fort-plan__plate:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.fort-plan__paper {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: calc(var(--radius-lg, 14px) - 6px);
+  background: #fff;
+  overflow: hidden;
+}
+.fort-plan__paper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: transform 0.4s ease;
+}
+.fort-plan__plate:hover .fort-plan__paper img { transform: scale(1.03); }
+.fort-plan__hint {
+  position: absolute;
+  inset: auto 12px 12px auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--gold-400);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.3);
+  opacity: 0.85;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fort-plan__plate:hover .fort-plan__hint { opacity: 1; transform: scale(1.08); }
+.fort-plan__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2) var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.fort-plan__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--font-body, inherit);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-500);
+}
+.fort-plan__plate:hover .fort-plan__cta { color: var(--ink-900); }
+@media (max-width: 700px) {
+  .fort-plan__grid--multi { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fort-plan__plate,
+  .fort-plan__paper img,
+  .fort-plan__hint { transition: none; }
+}
+
 /* ---------------------------------------------------------------- wikipedia credit */
 .fort-wiki-credit {
   margin-top: var(--space-4);

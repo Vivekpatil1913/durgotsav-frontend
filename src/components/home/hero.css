@@ -582,6 +582,24 @@
   text-shadow: 0 1px 8px rgb(20 8 2 / 0.6);
 }
 
+/* footnote tying the cash prizes to the award */
+.hero-award__star {
+  margin-left: 2px;
+  color: #ffc06b;
+}
+.hero-award__note {
+  margin: calc(var(--u) * 8) calc(var(--u) * 4) 0;
+  font-size: max(11.5px, calc(var(--u) * 10));
+  font-weight: 500;
+  line-height: 1.45;
+  color: #fff;
+  text-shadow: 0 1px 6px rgb(20 8 2 / 0.6);
+}
+.hero-award__note span {
+  font-style: normal;
+  color: #ffc06b;
+}
+
 /* ---- tablets & phones: the card joins the normal flow below the hero copy */
 @media (max-width: 1100px) {
   .hero {
@@ -606,7 +624,8 @@
   .hero-award__lead,
   .hero-award__actions,
   .hero-award__prizes-label,
-  .hero-award__prizes {
+  .hero-award__prizes,
+  .hero-award__note {
     margin-left: 6px;
     margin-right: 6px;
   }

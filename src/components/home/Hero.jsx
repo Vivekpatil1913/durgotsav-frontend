@@ -57,12 +57,16 @@ function AwardCard() {
         </Link>
       </div>
       <p className="hero-award__prizes-label" id="hero-award-prizes">
-        <Trophy size={15} strokeWidth={2.2} aria-hidden="true" /> {t("Win exciting cash prizes", "आकर्षक रोख पारितोषिके जिंका")}
+        <Trophy size={15} strokeWidth={2.2} aria-hidden="true" /> {t("Win exciting cash prizes", "आकर्षक रोख पारितोषिके जिंका")}<span className="hero-award__star" aria-hidden="true">*</span>
       </p>
       <ul className="hero-award__prizes" aria-labelledby="hero-award-prizes">
         <li><small>{t("Individual", "व्यक्तिगत विभाग")}</small> <b>₹51,000</b></li>
         <li><small>{t("Organization", "संस्थात्मक विभाग")}</small> <b>₹51,000</b></li>
       </ul>
+      <p className="hero-award__note">
+        <span aria-hidden="true">*</span>{" "}
+        {t("Please note: cash prizes are only for the Shivdurg Bhushan Award 2026, not for Durgotsav.", "कृपया नोंद घ्यावी: रोख पारितोषिके केवळ शिवदुर्ग भूषण पुरस्कार २०२६ साठी आहेत, दुर्गोत्सवासाठी नाहीत.")}
+      </p>
     </aside>
   );
 }

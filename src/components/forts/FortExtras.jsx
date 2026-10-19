@@ -1,3 +1,4 @@
+import { Maximize2, ZoomIn } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT } from "../../context/LanguageContext.jsx";
 import { Lightbox } from "../ui/Lightbox.jsx";
@@ -118,6 +119,68 @@ export function FortMapEmbed({ lat, lng, nameEn }) {
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
+      </div>
+    </section>
+  );
+}
+
+// Hand-drawn layout plans (gates, bastions, tanks, temples) kept in /public/images/forts/plans.
+const FORT_PLANS = {
+  gingee:      ["gingee"],
+  lohagad:     ["lohagad"],
+  panhala:     ["panhala-2", "panhala"],
+  pratapgad:   ["pratapgad"],
+  raigad:      ["raigad"],
+  rajgad:      ["rajgad"],
+  shivneri:    ["shivneri"],
+  sindhudurg:  ["sindhudurg"],
+  suvarnadurg: ["suvarnadurg"],
+  vijaydurg:   ["vijaydurg"],
+};
+
+export function FortPlan({ slug, nameEn, nameMr }) {
+  const t = useT();
+  const [lightbox, setLightbox] = useState(null);
+  const files = FORT_PLANS[slug];
+  if (!files) return null;
+
+  const many = files.length > 1;
+  const items = files.map((file, i) => {
+    const label = many
+      ? t(`${nameEn} Fort plan — ${i + 1} of ${files.length}`, `${nameMr} दुर्ग आराखडा — ${i + 1} / ${files.length}`)
+      : t(`${nameEn} Fort plan`, `${nameMr} दुर्ग आराखडा`);
+    return { src: `/images/forts/plans/${file}.webp`, alt: label, caption: label };
+  });
+
+  return (
+    <section className="section surface-parchment fort-plan" aria-labelledby="fort-plan-hd">
+      <div className="container">
+        <div className="section-head section-head--center">
+          <span className="eyebrow">{t("Fort Layout", "दुर्गाचा आराखडा")}</span>
+          <h2 id="fort-plan-hd">{t(`Plan of ${nameEn} Fort`, `${nameMr} — दुर्ग नकाशा`)}</h2>
+          <p>
+            {t(
+              "Gates, bastions, water tanks and temples as marked on the fort plan. Tap the plan to zoom in.",
+              "दरवाजे, बुरूज, तलाव व मंदिरे — दुर्गाच्या आराखड्यावर दर्शविलेली ठिकाणे. मोठे पाहण्यासाठी नकाशावर टॅप करा."
+            )}
+          </p>
+        </div>
+        <div className={`fort-plan__grid${many ? " fort-plan__grid--multi" : ""}`}>
+          {items.map((item, i) => (
+            <button key={item.src} type="button" className="fort-plan__plate" onClick={() => setLightbox(i)}
+              aria-label={t(`Enlarge: ${item.alt}`, `मोठे करा: ${item.alt}`)}>
+              <span className="fort-plan__paper">
+                <img src={item.src} alt={item.alt} loading="lazy" />
+                <span className="fort-plan__hint" aria-hidden="true"><ZoomIn size={22} /></span>
+              </span>
+              <span className="fort-plan__caption">
+                <span>{many ? t(`Plan ${i + 1}`, `आराखडा ${i + 1}`) : t("Fort plan", "दुर्ग आराखडा")}</span>
+                <span className="fort-plan__cta"><Maximize2 size={14} aria-hidden="true" />{t("View full size", "पूर्ण आकारात पाहा")}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        <Lightbox items={items} index={lightbox} onClose={() => setLightbox(null)} onIndex={setLightbox} />
       </div>
     </section>
   );

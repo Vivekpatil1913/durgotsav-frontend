@@ -15,32 +15,46 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
     {
       id:    "festival-begins",
       num:   t("01", "०१"),
-      title: t("Festival Begins", "दुर्गोत्सवाचा शुभारंभ"),
+      title: t("Durgotsav Shubharambh", "दुर्गोत्सव शुभारंभ"),
       desc:  t(
         "Build a fort replica, take a photo and submit the registration form.",
         "दुर्गाची प्रतिकृती उभारा, छायाचित्र काढा आणि नोंदणी अर्ज सादर करा."
       ),
-      date:  t("18 October 2026", "१८ ऑक्टोबर २०२६"),
+      date:  t("1 November 2026", "१ नोव्हेंबर २०२६"),
       tag:   "Festival Begins",
       img:   "/images/ml-icon-fort.png",
       alt:   t("Durgotsav — Fort", "दुर्गोत्सव — दुर्ग"),
     },
     {
-      id:    "registration-closes",
+      id:    "photo-upload-start",
       num:   t("02", "०२"),
-      title: t("Last Day of Registration", "नोंदणीचा अंतिम दिवस"),
+      title: t("Photo Upload Start", "छायाचित्र अपलोड सुरू"),
+      desc:  t(
+        "Photo upload opens. Upload your fort photo along with the registration form.",
+        "छायाचित्र अपलोड सुरू. नोंदणी अर्जासोबत आपल्या दुर्गाचे छायाचित्र अपलोड करा."
+      ),
+      date:  t("5 November 2026", "५ नोव्हेंबर २०२६"),
+      tag:   "Upload Opens",
+      img:   "/images/ml-icon-upload.webp",
+      alt:   t("Photo Upload — Fort", "छायाचित्र अपलोड — दुर्ग"),
+    },
+    {
+      id:    "photo-upload-deadline",
+      num:   t("03", "०३"),
+      title: t("Photo Upload Deadline", "छायाचित्र अपलोड अंतिम मुदत"),
       desc:  t(
         "Last day to upload your photo and form. Complete your registration before this date.",
         "छायाचित्र व अर्ज अपलोड करण्याचा शेवटचा दिवस. यापूर्वी नोंदणी पूर्ण करा."
       ),
-      date:  t("10 November 2026", "१० नोव्हेंबर २०२६"),
-      tag:   "Registration Closes",
-      img:   "/images/ml-icon-document.png",
-      alt:   t("Registration — Document", "नोंदणी — दस्तऐवज"),
+      date:  t("20 November 2026", "२० नोव्हेंबर २०२६"),
+      tag:   "Upload Closes",
+      img:   "/images/ml-icon-deadline.webp",
+      alt:   t("Upload Deadline — Fort", "अपलोड अंतिम मुदत — दुर्ग"),
     },
     {
       id:    "shiv-pratap-din",
-      num:   t("03", "०३"),
+      num:   t("04", "०४"),
+      onlyOnRequest: true, // not on the home timeline; shown only via `only` (award page)
       title: t("Shiv Pratap Din", "शिव प्रताप दिन"),
       desc:  t(
         "Grand ceremony for certificate distribution and the World Record. Jai Shivray!",
@@ -52,7 +66,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
       alt:   t("Shiv Pratap Din — Shivrai", "शिव प्रताप दिन — शिवराय"),
     },
   ];
-  const MILESTONES = (only ? ALL_MILESTONES.filter((m) => only.includes(m.id)) : ALL_MILESTONES)
+  const MILESTONES = (only ? ALL_MILESTONES.filter((m) => only.includes(m.id)) : ALL_MILESTONES.filter((m) => !m.onlyOnRequest))
     .map((m) => ({ ...m, ...overrides?.[m.id] }));
   const single = MILESTONES.length === 1;
 
