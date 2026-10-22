@@ -11,6 +11,13 @@
   min-height: 100svh;
   overflow: hidden;
   isolation: isolate;
+  /* copy (top-left), feature row (bottom-left), award card (right, spanning both rows).
+     In-flow grid rather than absolute positioning, so on short or high-DPI-scaled laptop
+     screens (e.g. 1920×1200 @150% = 1280×~650) the hero grows instead of overlapping. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 1fr auto;
+  column-gap: 24px;
   /* behind the translucent navbar (the artwork starts below it, as in the design) */
   background: linear-gradient(180deg, #5a2810, #7a3812);
   font-family: var(--hero-font);
@@ -50,8 +57,17 @@
 /* ---- content block */
 .hero__content {
   position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
   padding: max(calc(var(--u) * 80), calc(var(--header-h) + 16px)) 0 0 calc(var(--u) * 178);
   max-width: calc(var(--u) * 800);
+}
+/* small laptops: pull the copy left so it clears the award card */
+@media (max-width: 1440px) and (min-width: 1101px) {
+  .hero__content {
+    padding-left: calc(var(--u) * 120);
+  }
 }
 .hero__eyebrow {
   display: flex;
@@ -63,6 +79,11 @@
   letter-spacing: 0.38em;
   text-transform: uppercase;
   color: rgb(255 222 188 / 0.72);
+}
+/* letter-spacing splits Devanagari conjuncts apart (म हा रा ष्ट्रा) — space words instead */
+:lang(mr) .hero__eyebrow {
+  letter-spacing: 0;
+  word-spacing: 0.25em;
 }
 .hero__eyebrow b {
   font-weight: 600;
@@ -255,13 +276,15 @@
 
 /* ---- feature row (anchored to the bottom-left, as in the design) */
 .hero__features {
-  position: absolute;
-  left: calc(var(--u) * 66);
-  bottom: calc(var(--u) * 58);
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  row-gap: 12px;
   margin: 0;
-  padding: 0;
+  padding: calc(var(--u) * 28) 0 calc(var(--u) * 58) calc(var(--u) * 66);
   list-style: none;
 }
 .hero__feature {
@@ -384,12 +407,11 @@
 .hero-award {
   /* vertically centred in the artwork below the navbar (auto margins, not a transform —
      the intro animation clears transforms when it finishes) */
-  position: absolute;
-  top: var(--header-h);
-  bottom: 0;
-  height: fit-content;
-  margin-block: auto;
-  right: max(calc(var(--u) * 80), 112px);
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  margin: calc(var(--header-h) + 16px) max(calc(var(--u) * 80), 112px) 24px 0;
   z-index: 1;
   width: max(calc(var(--u) * 340), 360px);
   padding: calc(var(--u) * 10) calc(var(--u) * 10) calc(var(--u) * 14);
@@ -609,6 +631,7 @@
   .hero-award {
     position: relative;
     inset: auto;
+    align-self: auto;
     width: min(420px, calc(100% - 2.5rem));
     margin: 2rem 0 0 calc(var(--u) * 178);
     padding: 10px 10px 16px;

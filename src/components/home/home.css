@@ -861,9 +861,14 @@ section.story {
   color: var(--ink-900);
 }
 .voices__accent {
+  display: inline-block;
+  /* extra room so Devanagari top marks (reph, anusvara) fall inside the clipped gradient */
+  padding: 0.3em 0.04em 0.12em;
+  margin: -0.3em -0.04em -0.12em;
   background: linear-gradient(180deg, #e8781e 0%, #a8400f 100%);
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .voices__flourish,
