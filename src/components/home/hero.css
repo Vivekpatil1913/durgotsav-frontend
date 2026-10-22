@@ -280,9 +280,8 @@
   grid-row: 2;
   align-self: end;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  row-gap: 12px;
   margin: 0;
   padding: calc(var(--u) * 28) 0 calc(var(--u) * 58) calc(var(--u) * 66);
   list-style: none;
@@ -310,6 +309,23 @@
   min-height: 34px;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 6px rgb(236 90 18 / 0.35));
+}
+/* small laptops: tighter feature row so all four stay on one line beside the award card */
+@media (max-width: 1440px) and (min-width: 1101px) {
+  .hero__features {
+    padding-left: calc(var(--u) * 40);
+  }
+  .hero__feature {
+    gap: 12px;
+    padding: calc(var(--u) * 4) calc(var(--u) * 16);
+    white-space: nowrap;
+  }
+  .hero__feature-icon {
+    width: calc(var(--u) * 40);
+    height: calc(var(--u) * 40);
+    min-width: 30px;
+    min-height: 30px;
+  }
 }
 
 /* ---- phones & small tablets: same look, stacked layout */
