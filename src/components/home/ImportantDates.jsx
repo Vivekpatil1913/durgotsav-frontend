@@ -1,5 +1,8 @@
 import { Calendar } from "lucide-react";
-import { useT } from "../../context/LanguageContext.jsx";
+import { EDITION_YEAR, editionDate } from "../../config/edition.js";
+import { useLang, useT } from "../../context/LanguageContext.jsx";
+import { useSite } from "../../context/SiteContext.jsx";
+import { enDate, mrDate } from "../../lib/format.js";
 import { Divider } from "../ui/Ornament.jsx";
 import { Reveal } from "../ui/Reveal.jsx";
 import "./home.css";
@@ -10,6 +13,11 @@ import "./home.css";
 // heading, `watermark={false}` hides the background text and `className` adds a background variant.
 export function ImportantDates({ only, overrides, eyebrow, title, accent, subtitle, watermark = true, className = "" }) {
   const t = useT();
+  const { lang } = useLang();
+  const { settings } = useSite();
+  const dates = settings.important_dates ?? {};
+  // Dates come from Admin → Settings → Important dates; the edition's usual dates are shown until settings load
+  const day = (value) => (lang === "mr" ? mrDate(value) : enDate(value));
 
   const ALL_MILESTONES = [
     {
@@ -20,7 +28,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
         "Build a fort replica, take a photo and submit the registration form.",
         "दुर्गाची प्रतिकृती उभारा, छायाचित्र काढा आणि नोंदणी अर्ज सादर करा."
       ),
-      date:  t("1 November 2026", "१ नोव्हेंबर २०२६"),
+      date:  day(dates.festival_begins || editionDate("11-01")),
       tag:   "Festival Begins",
       img:   "/images/ml-icon-fort.png",
       alt:   t("Durgotsav — Fort", "दुर्गोत्सव — दुर्ग"),
@@ -33,7 +41,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
         "Photo upload opens. Upload your fort photo along with the registration form.",
         "छायाचित्र अपलोड सुरू. नोंदणी अर्जासोबत आपल्या दुर्गाचे छायाचित्र अपलोड करा."
       ),
-      date:  t("5 November 2026", "५ नोव्हेंबर २०२६"),
+      date:  day(dates.upload_opens || editionDate("11-05")),
       tag:   "Upload Opens",
       img:   "/images/ml-icon-upload.webp",
       alt:   t("Photo Upload — Fort", "छायाचित्र अपलोड — दुर्ग"),
@@ -46,7 +54,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
         "Last day to upload your photo and form. Complete your registration before this date.",
         "छायाचित्र व अर्ज अपलोड करण्याचा शेवटचा दिवस. यापूर्वी नोंदणी पूर्ण करा."
       ),
-      date:  t("20 November 2026", "२० नोव्हेंबर २०२६"),
+      date:  day(dates.upload_closes || editionDate("11-20")),
       tag:   "Upload Closes",
       img:   "/images/ml-icon-deadline.webp",
       alt:   t("Upload Deadline — Fort", "अपलोड अंतिम मुदत — दुर्ग"),
@@ -60,7 +68,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
         "Grand ceremony for certificate distribution and the World Record. Jai Shivray!",
         "अभिनंदन पत्र वितरण व जागतिक विश्वविक्रमाचा भव्य सोहळा. जय शिवराय!"
       ),
-      date:  t("10 November 2026", "१० नोव्हेंबर २०२६"),
+      date:  day(editionDate("11-10")),
       tag:   "World Record Day",
       img:   "/images/ml-icon-warrior.png",
       alt:   t("Shiv Pratap Din — Shivrai", "शिव प्रताप दिन — शिवराय"),
@@ -80,7 +88,7 @@ export function ImportantDates({ only, overrides, eyebrow, title, accent, subtit
         <Reveal className="idates__head">
           <span className="eyebrow">{eyebrow ?? t("Planning & Important Dates", "नियोजन व महत्त्वाच्या तारखा")}</span>
           <h2 id="idates-title" className="idates__title">
-            {title ?? t("Durgotsav", "दुर्गोत्सव")} <span className="idates__title-accent">{accent ?? "2026"}</span>
+            {title ?? t("Durgotsav", "दुर्गोत्सव")} <span className="idates__title-accent">{accent ?? EDITION_YEAR}</span>
           </h2>
           <Divider className="idates__divider" />
           <p className="idates__subtitle">

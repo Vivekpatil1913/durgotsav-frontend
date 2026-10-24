@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useApi } from "../../hooks/useApi.js";
 import { http, toApiError } from "../../lib/api.js";
@@ -220,7 +221,7 @@ export function RegistrationForm() {
   return (
     <form className="reg-form card-light" onSubmit={submit} noValidate ref={topRef} aria-labelledby="reg-title">
       <div className="reg-form__head">
-        <h2 id="reg-title">{t("Durgotsav 2026 Registration", "दुर्गोत्सव २०२६ नोंदणी")}</h2>
+        <h2 id="reg-title">{t(`Durgotsav ${EDITION_YEAR} Registration`, `दुर्गोत्सव ${EDITION_YEAR_MR} नोंदणी`)}</h2>
         <ol className="stepper" aria-label={t("Registration steps", "नोंदणीचे टप्पे")}>
           {STEPS.map((label, i) => (
             <li key={label} className={i === step ? "is-current" : i < step ? "is-done" : ""} aria-current={i === step ? "step" : undefined}>
@@ -549,7 +550,7 @@ function Success({ result, onReset }) {
         <CheckCircle2 aria-hidden="true" />
       </motion.span>
       <h2>{t("Registration Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी यशस्वी! जय भवानी, जय शिवाजी!")}</h2>
-      <p>{t("Thank you for participating in Durgotsav 2026. Your registration number:", "दुर्गोत्सव २०२६ मध्ये सहभागी झाल्याबद्दल धन्यवाद. आपला नोंदणी क्रमांक:")}</p>
+      <p>{t(`Thank you for participating in Durgotsav ${EDITION_YEAR}. Your registration number:`, `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल धन्यवाद. आपला नोंदणी क्रमांक:`)}</p>
       <div className="reg-success__number">
         <strong>{result.registration_no}</strong>
         <button type="button" className="btn btn--outline btn--sm" onClick={copy}>

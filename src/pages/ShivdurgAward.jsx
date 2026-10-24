@@ -10,6 +10,7 @@ import { Seo } from "../components/seo/Seo.jsx";
 import { Accordion } from "../components/ui/Accordion.jsx";
 import { ErrorState } from "../components/ui/PageParts.jsx";
 import { Reveal } from "../components/ui/Reveal.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -131,7 +132,7 @@ export default function ShivdurgAward() {
   const e = award?.edition;
   const c = localContent(e, lang);
   const status = award?.status;
-  const title = e ? t(e.title_en || e.title, e.title) : t("Shivdurg Bhushan Puraskar 2026", "शिवदुर्ग भूषण पुरस्कार २०२६");
+  const title = e ? t(e.title_en || e.title, e.title) : t(`Shivdurg Bhushan Puraskar ${EDITION_YEAR}`, `शिवदुर्ग भूषण पुरस्कार ${EDITION_YEAR_MR}`);
   const tagline = e ? t(e.tagline_en || e.tagline, e.tagline) : "";
 
   const jsonLd = e && {
@@ -162,7 +163,7 @@ export default function ShivdurgAward() {
     <>
       <Seo
         title={title}
-        description={e ? pick(lang, e.tagline, e.tagline_en) : t("Shivdurg Bhushan Puraskar 2026 — honouring individuals and organisations working for fort conservation, research and awareness.", "शिवदुर्ग भूषण पुरस्कार २०२६ — गडदुर्ग संवर्धन, संशोधन व जनजागृतीसाठी कार्य करणाऱ्या व्यक्ती व संस्थांचा सन्मान.")}
+        description={e ? pick(lang, e.tagline, e.tagline_en) : t(`Shivdurg Bhushan Puraskar ${EDITION_YEAR} — honouring individuals and organisations working for fort conservation, research and awareness.`, `शिवदुर्ग भूषण पुरस्कार ${EDITION_YEAR_MR} — गडदुर्ग संवर्धन, संशोधन व जनजागृतीसाठी कार्य करणाऱ्या व्यक्ती व संस्थांचा सन्मान.`)}
         image="/images/award/fort-sunset-og.jpg"
         jsonLd={jsonLd}
       />
@@ -246,7 +247,7 @@ export default function ShivdurgAward() {
           overrides={{ "shiv-pratap-din": { num: t("01", "०१"), date: `${date(e.nomination_opens_at)} – ${date(e.nomination_closes_at)}` } }}
           eyebrow={t("Award ceremony", "पुरस्कार सोहळा")}
           title={t("Shivdurg Bhushan Puraskar", "शिवदुर्ग भूषण पुरस्कार")}
-          accent={t("2026", "२०२६")}
+          accent={t(EDITION_YEAR, EDITION_YEAR_MR)}
           subtitle={t(
             "Send your nominations within the nomination period. The award will be presented at the grand Shiv Pratap Din ceremony.",
             "नामनिर्देशन कालावधीत आपले नामनिर्देशन पाठवा. पुरस्काराचे वितरण शिव प्रताप दिनाच्या भव्य सोहळ्यात होईल."

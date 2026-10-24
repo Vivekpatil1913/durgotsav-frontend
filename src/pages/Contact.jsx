@@ -5,6 +5,7 @@ import "../components/participate/registration.css";
 import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { PageHero } from "../components/ui/PageParts.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { http, toApiError } from "../lib/api.js";
@@ -49,8 +50,8 @@ export default function Contact() {
       <Seo
         title={t("Contact & Help", "संपर्क व मदत")}
         description={t(
-          "Durgotsav 2026 — contact AMRUT for help with registration, photo upload or certificate.",
-          "दुर्गोत्सव २०२६ — नोंदणी, छायाचित्र अपलोड किंवा अभिनंदन पत्राविषयी मदतीसाठी अमृत संस्थेशी संपर्क साधा."
+          `Durgotsav ${EDITION_YEAR} — contact AMRUT for help with registration, photo upload or certificate.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} — नोंदणी, छायाचित्र अपलोड किंवा अभिनंदन पत्राविषयी मदतीसाठी अमृत संस्थेशी संपर्क साधा.`
         )}
       />
       <PageHero

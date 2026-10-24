@@ -4,6 +4,7 @@ import "../components/award/award.css";
 import { NominationForm } from "../components/award/NominationForm.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { ErrorState, PageHero } from "../components/ui/PageParts.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { AWARD_PATH, pick } from "../lib/award.js";
@@ -32,7 +33,7 @@ export default function ShivdurgNominate() {
           </picture>
         }
         eyebrow={t("Nomination", "नामनिर्देशन")}
-        title={e ? pick(lang, e.title, e.title_en) : t("Shivdurg Bhushan Puraskar 2026", "शिवदुर्ग भूषण पुरस्कार २०२६")}
+        title={e ? pick(lang, e.title, e.title_en) : t(`Shivdurg Bhushan Puraskar ${EDITION_YEAR}`, `शिवदुर्ग भूषण पुरस्कार ${EDITION_YEAR_MR}`)}
         crumbs={[[AWARD_PATH, t("Shivdurg Bhushan Award", "शिवदुर्ग भूषण पुरस्कार")]]}
         lead={t("Choose the category, fill in the details, add evidence, review and submit.", "विभाग निवडा, माहिती भरा, पुरावे जोडा, पुनरावलोकन करा आणि अर्ज सादर करा.")}
       >

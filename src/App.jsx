@@ -4,6 +4,7 @@ import { Layout } from "./components/layout/Layout.jsx";
 import { RouteError } from "./components/layout/RouteError.jsx";
 import { LanguageProvider } from "./context/LanguageContext.jsx";
 import { SiteProvider } from "./context/SiteContext.jsx";
+import { AWARD_PATH, LEGACY_AWARD_PATHS } from "./lib/award.js";
 import { startSmoothScroll } from "./lib/smoothScroll.js";
 import Home from "./pages/Home.jsx";
 
@@ -25,7 +26,7 @@ const ShivdurgNominate = lazy(() => import("./pages/ShivdurgNominate.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
-// Earlier award URL (/amrut-shivdurg-…) → current one, keeping ?type= and #hash
+// Earlier award URLs (/amrut-shivdurg-…, past editions) → current one, keeping ?type= and #hash
 function AwardRedirect({ to }) {
   const { search, hash } = useLocation();
   return <Navigate to={`${to}${search}${hash}`} replace />;
@@ -49,10 +50,12 @@ const router = createBrowserRouter([
       { path: "faq", element: <Faq /> },
       { path: "contact", element: <Contact /> },
       { path: "dashboard", element: <Dashboard /> },
-      { path: "shivdurg-bhushan-puraskar-2026", element: <ShivdurgAward /> },
-      { path: "shivdurg-bhushan-puraskar-2026/nominate", element: <ShivdurgNominate /> },
-      { path: "amrut-shivdurg-bhushan-puraskar-2026", element: <AwardRedirect to="/shivdurg-bhushan-puraskar-2026" /> },
-      { path: "amrut-shivdurg-bhushan-puraskar-2026/nominate", element: <AwardRedirect to="/shivdurg-bhushan-puraskar-2026/nominate" /> },
+      { path: AWARD_PATH.slice(1), element: <ShivdurgAward /> },
+      { path: `${AWARD_PATH.slice(1)}/nominate`, element: <ShivdurgNominate /> },
+      ...LEGACY_AWARD_PATHS.flatMap((p) => [
+        { path: p.slice(1), element: <AwardRedirect to={AWARD_PATH} /> },
+        { path: `${p.slice(1)}/nominate`, element: <AwardRedirect to={`${AWARD_PATH}/nominate`} /> },
+      ]),
       { path: "rules", element: <ContentPage slug="rules" /> },
       { path: "privacy", element: <ContentPage slug="privacy" /> },
       { path: "terms", element: <ContentPage slug="terms" /> },

@@ -1,7 +1,9 @@
 import { ArrowRight, Instagram, Mail, MapPin, Phone, Youtube, Facebook, Linkedin, Twitter } from "lucide-react";
 import { Link } from "react-router-dom";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
+import { AWARD_PATH } from "../../lib/award.js";
 import { Divider } from "../ui/Ornament.jsx";
 import { VisitorCounter } from "./VisitorCounter.jsx";
 import "./footer.css";
@@ -36,7 +38,7 @@ export function Footer() {
     [t("Quick Links", "त्वरित दुवे"), [
       ["/about",              t("Campaign Objectives", "मोहिमेचे उद्दिष्ट")],
       ["/participate",        t("How to Participate", "सहभाग कसा घ्यावा")],
-      ["/shivdurg-bhushan-puraskar-2026", t("Shivdurg Bhushan Award", "शिवदुर्ग भूषण पुरस्कार")],
+      [AWARD_PATH, t("Shivdurg Bhushan Award", "शिवदुर्ग भूषण पुरस्कार")],
       ["/gallery",            t("Gallery", "गॅलरी")],
       ["/faq",                t("FAQ", "प्रश्नोत्तरे")],
     ]],
@@ -50,8 +52,8 @@ export function Footer() {
             <div className="site-footer__brand-header">
               <img src="/brand/emblem-white.webp" alt={t("Government of Maharashtra", "महाराष्ट्र शासन")} width="40" height="48" loading="lazy" />
               <img src="/brand/amrut-white.webp" alt={t("AMRUT", "अमृत")} width="96" height="48" loading="lazy" />
-              <img src="/brand/durgotsav-logo-320.webp" alt={t("Amrut Durgotsav 2026 Logo", "अमृत दुर्गोत्सव २०२६ बोधचिन्ह")} width="44" height="44" loading="lazy" />
-              <span className="site-footer__brand-title">{t("Durgotsav 2026", "दुर्गोत्सव २०२६")}</span>
+              <img src="/brand/durgotsav-logo-320.webp" alt={t(`Amrut Durgotsav ${EDITION_YEAR} Logo`, `अमृत दुर्गोत्सव ${EDITION_YEAR_MR} बोधचिन्ह`)} width="44" height="44" loading="lazy" />
+              <span className="site-footer__brand-title">{t(`Durgotsav ${EDITION_YEAR}`, `दुर्गोत्सव ${EDITION_YEAR_MR}`)}</span>
             </div>
             <p className="site-footer__tagline">{t("Let's Build a Fort!", "चला, दुर्ग बनवूया!")}</p>
             <p className="site-footer__about">
@@ -96,8 +98,8 @@ export function Footer() {
         <div className="site-footer__cta">
           <p className="site-footer__cta-text">
             {t(
-              "“Come, let us preserve the heritage of our culture… let's take part in Amrut Durgotsav 2026!”",
-              "“चला, आपल्या संस्कृतीचा वारसा जपूया… अमृत दुर्गोत्सव २०२६ मध्ये सहभागी होऊया!”"
+              `“Come, let us preserve the heritage of our culture… let's take part in Amrut Durgotsav ${EDITION_YEAR}!”`,
+              `“चला, आपल्या संस्कृतीचा वारसा जपूया… अमृत दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी होऊया!”`
             )}
           </p>
           <Link to="/participate" className="btn btn--primary site-footer__cta-btn">
@@ -108,7 +110,7 @@ export function Footer() {
         <Divider className="site-footer__divider" />
 
         <div className="site-footer__bottom">
-          <p>{t("© 2026 AMRUT, Maharashtra. All rights reserved.", "© २०२६ अमृत, महाराष्ट्र. सर्व हक्क राखीव.")}</p>
+          <p>{t(`© ${EDITION_YEAR} AMRUT, Maharashtra. All rights reserved.`, `© ${EDITION_YEAR_MR} अमृत, महाराष्ट्र. सर्व हक्क राखीव.`)}</p>
           <nav aria-label={t("Legal", "कायदेशीर")} className="cluster">
             <Link to="/privacy">{t("Privacy Policy", "गोपनीयता धोरण")}</Link>
             <Link to="/terms">{t("Terms & Conditions", "अटी व शर्ती")}</Link>

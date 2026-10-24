@@ -7,6 +7,7 @@ import "../components/participate/registration.css";
 import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { PageHero } from "../components/ui/PageParts.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR, NUMBER_PREFIX } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { http, toApiError } from "../lib/api.js";
 import { assetUrl, enDate, mrDate, STATUS, STATUS_EN } from "../lib/format.js";
@@ -40,7 +41,7 @@ function Lookup({ initial, submitLabel, busy, onSubmit, error }) {
   };
   return (
     <form className="form-grid form-grid--2" onSubmit={submit} noValidate>
-      <Field label={t("Registration Number", "नोंदणी क्रमांक")} required error={errs.registration} hint={t("e.g. DGT26-000123 or just 123", "उदा. DGT26-000123 किंवा फक्त 123")}>
+      <Field label={t("Registration Number", "नोंदणी क्रमांक")} required error={errs.registration} hint={t(`e.g. ${NUMBER_PREFIX}-000123 or just 123`, `उदा. ${NUMBER_PREFIX}-000123 किंवा फक्त 123`)}>
         {(p) => <input {...p} className="input" value={registration} onChange={(e) => setRegistration(e.target.value)} autoComplete="off" maxLength={20} />}
       </Field>
       <Field label={t("Mobile Number", "मोबाईल क्रमांक")} required error={errs.phone}>
@@ -75,7 +76,7 @@ function DownloadTab({ initial }) {
       const url = URL.createObjectURL(res.data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Durgotsav-2026-Abhinandan-Patra-${q.registration}.pdf`;
+      a.download = `Durgotsav-${EDITION_YEAR}-Abhinandan-Patra-${q.registration}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -238,7 +239,7 @@ function DownloadInline({ query }) {
       try {
         const res = await http.get("/certificates/download", { params: query, responseType: "blob", timeout: 60000 });
         const url = URL.createObjectURL(res.data);
-        Object.assign(document.createElement("a"), { href: url, download: `Durgotsav-2026-${query.registration}.pdf` }).click();
+        Object.assign(document.createElement("a"), { href: url, download: `Durgotsav-${EDITION_YEAR}-${query.registration}.pdf` }).click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       } finally {
         setBusy(false);
@@ -280,13 +281,13 @@ function VerifyTab() {
     <div className="stack">
       <p className="muted">
         {t(
-          "Enter the number printed at the bottom of the certificate (e.g. AMRUT-DGT26-000123) to verify it is authentic.",
-          "अभिनंदन पत्राच्या खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-DGT26-000123) लिहून ते अधिकृत आहे का ते तपासा."
+          `Enter the number printed at the bottom of the certificate (e.g. AMRUT-${NUMBER_PREFIX}-000123) to verify it is authentic.`,
+          `अभिनंदन पत्राच्या खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-${NUMBER_PREFIX}-000123) लिहून ते अधिकृत आहे का ते तपासा.`
         )}
       </p>
       <form className="cluster verify-form" onSubmit={verify} noValidate>
         <label className="sr-only" htmlFor="cert-no">{t("Certificate Number", "अभिनंदन पत्र क्रमांक")}</label>
-        <input id="cert-no" className="input" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} placeholder="AMRUT-DGT26-000123" maxLength={40} />
+        <input id="cert-no" className="input" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} placeholder={`AMRUT-${NUMBER_PREFIX}-000123`} maxLength={40} />
         <button type="submit" className="btn btn--primary" disabled={busy}>
           {busy ? <Loader2 className="spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />} {t("Verify", "पडताळा")}
         </button>
@@ -320,8 +321,8 @@ export default function Certificate() {
       <Seo
         title={t("Congratulation Certificate", "अभिनंदन पत्र")}
         description={t(
-          "Durgotsav 2026 — download your digital certificate, check registration status, and verify certificates.",
-          "दुर्गोत्सव २०२६ — नोंदणी क्रमांक व मोबाईल क्रमांक वापरून डिजिटल अभिनंदन पत्र डाउनलोड करा, नोंदणी स्थिती तपासा आणि अभिनंदन पत्राची पडताळणी करा."
+          `Durgotsav ${EDITION_YEAR} — download your digital certificate, check registration status, and verify certificates.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} — नोंदणी क्रमांक व मोबाईल क्रमांक वापरून डिजिटल अभिनंदन पत्र डाउनलोड करा, नोंदणी स्थिती तपासा आणि अभिनंदन पत्राची पडताळणी करा.`
         )}
       />
       <PageHero

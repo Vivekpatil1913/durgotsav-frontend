@@ -1,5 +1,14 @@
+import { EDITION_YEAR } from "../config/edition.js";
+
 // शिवदुर्ग भूषण पुरस्कार — public route of the award landing page (nomination form lives under /nominate)
-export const AWARD_PATH = "/shivdurg-bhushan-puraskar-2026";
+export const AWARD_PATH = `/shivdurg-bhushan-puraskar-${EDITION_YEAR}`;
+
+// Earlier award URLs, redirected to AWARD_PATH: the first naming (/amrut-…) and the pages of past editions
+const FIRST_AWARD_YEAR = 2026;
+export const LEGACY_AWARD_PATHS = [
+  "/amrut-shivdurg-bhushan-puraskar-2026",
+  ...Array.from({ length: Math.max(0, EDITION_YEAR - FIRST_AWARD_YEAR) }, (_, i) => `/shivdurg-bhushan-puraskar-${FIRST_AWARD_YEAR + i}`),
+];
 
 // Admin-managed text exists in Marathi (always) and English (optional): English falls back to Marathi.
 export const pick = (lang, mr, en) => (lang === "en" && en ? en : mr ?? "");

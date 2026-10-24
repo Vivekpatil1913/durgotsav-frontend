@@ -5,6 +5,7 @@ import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { Accordion } from "../components/ui/Accordion.jsx";
 import { EmptyState, ErrorState, PageHero } from "../components/ui/PageParts.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import "./pages.css";
@@ -31,8 +32,8 @@ export default function Faq() {
       <Seo
         title={t("FAQ — Frequently Asked Questions", "प्रश्नोत्तरे (FAQ)")}
         description={t(
-          "Durgotsav 2026 — frequently asked questions about participation, registration, photos and certificates.",
-          "दुर्गोत्सव २०२६ — सहभाग, नोंदणी, छायाचित्र आणि अभिनंदन पत्राविषयी वारंवार विचारले जाणारे प्रश्न."
+          `Durgotsav ${EDITION_YEAR} — frequently asked questions about participation, registration, photos and certificates.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} — सहभाग, नोंदणी, छायाचित्र आणि अभिनंदन पत्राविषयी वारंवार विचारले जाणारे प्रश्न.`
         )}
         jsonLd={jsonLd || undefined}
       />

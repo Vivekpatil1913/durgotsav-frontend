@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Seo } from "../components/seo/Seo.jsx";
 import { ErrorState, PageHero, Pagination } from "../components/ui/PageParts.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { http, toApiError } from "../lib/api.js";
 import { mrNumber } from "../lib/format.js";
@@ -445,8 +446,8 @@ export default function Dashboard() {
       <Seo
         title={t("Dashboard — Live Statistics", "डॅशबोर्ड — थेट आकडेवारी")}
         description={t(
-          "Durgotsav 2026 — real-time overview of registrations, photo uploads, verifications and certificates.",
-          "दुर्गोत्सव २०२६ — नोंदणी, छायाचित्र अपलोड, पडताळणी आणि अभिनंदन पत्रे यांचे वास्तवकालीन विहंगावलोकन."
+          `Durgotsav ${EDITION_YEAR} — real-time overview of registrations, photo uploads, verifications and certificates.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} — नोंदणी, छायाचित्र अपलोड, पडताळणी आणि अभिनंदन पत्रे यांचे वास्तवकालीन विहंगावलोकन.`
         )}
       />
       <PageHero

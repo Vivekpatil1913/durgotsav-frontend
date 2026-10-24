@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { scrollToElement, scrollToTop } from "../../lib/smoothScroll.js";
@@ -76,7 +77,7 @@ export function Layout() {
       <div className="contact-fabs">
         <a
           className="contact-fab contact-fab--whatsapp"
-          href={`https://wa.me/919112226154?text=${encodeURIComponent(t("Hello! I need help with Durgotsav 2026.", "नमस्कार! मला दुर्गोत्सव २०२६ बद्दल मदत हवी आहे."))}`}
+          href={`https://wa.me/919112226154?text=${encodeURIComponent(t(`Hello! I need help with Durgotsav ${EDITION_YEAR}.`, `नमस्कार! मला दुर्गोत्सव ${EDITION_YEAR_MR} बद्दल मदत हवी आहे.`))}`}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t("Chat on WhatsApp", "WhatsApp वर बोलणे")}

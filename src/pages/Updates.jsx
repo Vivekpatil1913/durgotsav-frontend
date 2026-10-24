@@ -4,6 +4,7 @@ import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
 import { EmptyState, ErrorState, PageHero } from "../components/ui/PageParts.jsx";
 import { Reveal } from "../components/ui/Reveal.jsx";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { enDate, mrDate } from "../lib/format.js";
@@ -21,8 +22,8 @@ export default function Updates() {
       <Seo
         title={t("Updates & Announcements", "अपडेट्स व घोषणा")}
         description={t(
-          "Official announcements, rule changes and schedule updates for Durgotsav 2026.",
-          "दुर्गोत्सव २०२६ बाबतच्या अधिकृत घोषणा, नियम व कालावधीतील बदल."
+          `Official announcements, rule changes and schedule updates for Durgotsav ${EDITION_YEAR}.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} बाबतच्या अधिकृत घोषणा, नियम व कालावधीतील बदल.`
         )}
       />
       <PageHero

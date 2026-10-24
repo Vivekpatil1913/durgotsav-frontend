@@ -105,7 +105,7 @@
   fill: #f26b1d;
 }
 
-/* "Amrut" label, "Durgotsav" on one straight line, then the script "2026" below it */
+/* "Amrut" label, "Durgotsav" on one straight line, then the script edition year (EDITION_YEAR) below it */
 .hero__title {
   display: grid;
   margin: calc(var(--u) * 2) 0 0;

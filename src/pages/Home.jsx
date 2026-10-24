@@ -8,6 +8,7 @@ import { ImportantDates } from "../components/home/ImportantDates.jsx";
 import { FestivalBanner, GalleryPreview, Mission, Story, Voices, WorldRecord } from "../components/home/HomeSections.jsx";
 import { RegistrationTeaser } from "../components/participate/RegistrationTeaser.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
+import { EDITION_YEAR_MR } from "../config/edition.js";
 import { useSite } from "../context/SiteContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { SITE_URL } from "../lib/api.js";
@@ -48,7 +49,7 @@ export default function Home() {
       },
       reg && {
         "@type": "Event",
-        name: "अमृत दुर्गोत्सव २०२६",
+        name: `अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`,
         description: settings.seo?.default_description,
         startDate: reg.opens_at,
         endDate: reg.closes_at,
@@ -79,7 +80,7 @@ export default function Home() {
         </div>
       </section>
       <FestivalBanner />
-      {/* No verified 2026 photos yet → show curated 2025 highlights instead */}
+      {/* No verified photos of this edition yet → show curated 2025 highlights instead */}
       {data && (home.gallery?.length ? <GalleryPreview photos={home.gallery} /> : <Highlights2025 limit={10} />)}
       <DurgotsavCta />
     </>

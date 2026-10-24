@@ -133,8 +133,10 @@
   text-decoration: underline;
 }
 
-/* Playlist */
+/* Playlist — scrolls inside its card; on desktop the card is capped to the player's height */
 .podcasts__list-wrap {
+  display: flex;
+  flex-direction: column;
   padding: var(--space-4);
   border: 1px solid rgb(168 90 23 / 0.16);
   border-radius: var(--radius-lg);
@@ -143,6 +145,7 @@
   backdrop-filter: blur(4px);
 }
 .podcasts__count {
+  flex: none;
   margin: 0 0 var(--space-3);
   padding-inline: var(--space-2);
   font-size: var(--text-xs);
@@ -154,9 +157,57 @@
 .podcasts__list {
   display: grid;
   gap: var(--space-2);
-  margin: 0;
-  padding: 0;
+  max-height: min(65vh, 480px);
+  /* the scrollbar sits in the card's padding, so rows keep their width whether or not it shows */
+  margin: 0 calc(var(--space-2) * -1) 0 0;
+  padding: 0 var(--space-2) var(--space-1) 0;
   list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sand-400) transparent;
+}
+.podcasts__list::-webkit-scrollbar { width: 6px; }
+.podcasts__list::-webkit-scrollbar-track { background: transparent; }
+.podcasts__list::-webkit-scrollbar-thumb { background: var(--sand-400); border-radius: 3px; }
+.podcasts__list::-webkit-scrollbar-thumb:hover { background: var(--bronze-500); }
+/* sentinel row at the end of the list — shows the spinner / retry while the next page loads */
+.podcasts__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+.podcasts__retry {
+  padding: 0.4em 0.9em;
+  border: 1px solid rgb(212 98 42 / 0.4);
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--saffron-500);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.podcasts__retry:hover {
+  background: rgb(212 98 42 / 0.08);
+}
+@media (min-width: 960px) {
+  /* contain: size — the aside adds nothing to the row height, so the row follows the player and the aside stretches to it */
+  .podcasts__aside {
+    align-self: stretch;
+    contain: size;
+  }
+  .podcasts__list-wrap {
+    max-height: 100%;
+  }
+  .podcasts__list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overscroll-behavior: contain;
+  }
 }
 .podcasts__item {
   display: grid;

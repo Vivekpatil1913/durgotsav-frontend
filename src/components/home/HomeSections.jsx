@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Autoplay, A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
 import { assetUrl, enDate, mrDate } from "../../lib/format.js";
@@ -286,7 +287,7 @@ export function Journey() {
           <div className="img-frame journey__art">
             <Img
               src="/images/chala-durg-banavuya-2026.png"
-              alt={t("Children building a fort replica — Let's Build a Fort! Amrut Durgotsav 2026", "दुर्गाची प्रतिकृती बनवणारी मुले — चला दुर्ग बनवूयात! अमृत दुर्गोत्सव २०२६")}
+              alt={t(`Children building a fort replica — Let's Build a Fort! Amrut Durgotsav ${EDITION_YEAR}`, `दुर्गाची प्रतिकृती बनवणारी मुले — चला दुर्ग बनवूयात! अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`)}
               width="1280"
               height="853"
             />
@@ -318,7 +319,7 @@ export function Journey() {
 export function FestivalBanner() {
   const t = useT();
   return (
-    <section className="section surface-parchment festival-banner" aria-label={t("Let's Build a Fort — Amrut Durgotsav 2026", "चला दुर्ग बनवूया — अमृत दुर्गोत्सव २०२६")}>
+    <section className="section surface-parchment festival-banner" aria-label={t(`Let's Build a Fort — Amrut Durgotsav ${EDITION_YEAR}`, `चला दुर्ग बनवूया — अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`)}>
       <div className="container split">
         <Reveal className="festival-banner__media">
           <div className="img-frame">
@@ -416,7 +417,7 @@ export function WorldRecord() {
             </dl>
             <p className="world-record__body">
               {t(
-                wr.body_en || "Together, we earned Durgotsav a place in the Guinness Book of World Records. This is a proud moment for every participant, volunteer and well-wisher. Let's take this tradition even higher in Durgotsav 2026!",
+                wr.body_en || `Together, we earned Durgotsav a place in the Guinness Book of World Records. This is a proud moment for every participant, volunteer and well-wisher. Let's take this tradition even higher in Durgotsav ${EDITION_YEAR}!`,
                 wr.body
               )}
             </p>

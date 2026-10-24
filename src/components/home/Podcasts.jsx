@@ -1,11 +1,13 @@
-import { ExternalLink, Headphones, Play } from "lucide-react";
-import { useState } from "react";
+import { ExternalLink, Headphones, Loader2, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
-import { useApi } from "../../hooks/useApi.js";
+import { usePagedApi } from "../../hooks/usePagedApi.js";
 import { Img } from "../ui/Img.jsx";
 import { Reveal } from "../ui/Reveal.jsx";
 import "./podcasts.css";
 
+
+const PAGE = 10; // episodes fetched per request as the playlist scrolls
 
 const thumb = (id, size = "hqdefault") => `https://i.ytimg.com/vi/${id}/${size}.jpg`;
 const toMr = (s) => String(s).replace(/[0-9]/g, (d) => "०१२३४५६७८९"[d]);
@@ -19,10 +21,27 @@ export function Podcasts({ className = "" }) {
   const isMr = useLang().lang === "mr";
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
-  // Episodes are managed in the admin panel (Content → Podcasts)
-  const episodes = useApi("/podcasts").data?.data ?? [];
+  const listRef = useRef(null);
+  const sentinelRef = useRef(null);
+  // Episodes are managed in the admin panel (Content → Podcasts); the API serves them page by page
+  const { items: episodes, total, page, hasMore, loading, error, loadMore, retry } = usePagedApi("/podcasts", PAGE);
   const current = episodes[active];
   const title = (p) => t(p.title_en, p.title_mr);
+
+  // Fetch the next page when the end of the playlist scrolls near, so 100+ episodes never load (or render) at once.
+  // A fresh observer per page re-checks the sentinel, which keeps filling a list still too short to scroll.
+  useEffect(() => {
+    const root = listRef.current;
+    const sentinel = sentinelRef.current;
+    if (!hasMore || error || !root || !sentinel) return undefined;
+    const io = new IntersectionObserver(([entry]) => entry.isIntersecting && loadMore(), {
+      root,
+      rootMargin: "0px 0px 240px 0px",
+    });
+    io.observe(sentinel);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, hasMore, error]);
 
   if (!current) return null;
 
@@ -75,34 +94,53 @@ export function Podcasts({ className = "" }) {
             </div>
           </Reveal>
 
-          <Reveal delay={0.1} className="podcasts__list-wrap">
-            <p className="podcasts__count">
-              {t(`${episodes.length} episodes`, `${toMr(episodes.length)} भाग`)}
-            </p>
-            <ol className="podcasts__list">
-              {episodes.map((p, i) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={`podcasts__item ${i === active ? "is-active" : ""}`}
-                    aria-current={i === active ? "true" : undefined}
-                    onClick={() => select(i)}
-                  >
-                    <span className="podcasts__thumb">
-                      <Img src={thumb(p.youtube_id, "mqdefault")} alt="" width="320" height="180" />
-                      <span className="podcasts__thumb-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span>
-                    </span>
-                    <span className="podcasts__meta">
-                      <span className="podcasts__num">
-                        {t("Episode", "भाग")} {num(i + 1, isMr)}
-                        {i === active && playing && <span className="podcasts__live"> • {t("Now playing", "सध्या चालू")}</span>}
+          <Reveal delay={0.1} className="podcasts__aside">
+            <div className="podcasts__list-wrap">
+              <p className="podcasts__count">
+                {t(`${total} episodes`, `${toMr(total)} भाग`)}
+              </p>
+              {/* data-lenis-prevent: let the wheel scroll this list natively instead of the page */}
+              <ol ref={listRef} className="podcasts__list" data-lenis-prevent>
+                {episodes.map((p, i) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className={`podcasts__item ${i === active ? "is-active" : ""}`}
+                      aria-current={i === active ? "true" : undefined}
+                      onClick={() => select(i)}
+                    >
+                      <span className="podcasts__thumb">
+                        <Img src={thumb(p.youtube_id, "mqdefault")} alt="" width="320" height="180" />
+                        <span className="podcasts__thumb-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span>
                       </span>
-                      <span className="podcasts__name">{title(p)}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
+                      <span className="podcasts__meta">
+                        <span className="podcasts__num">
+                          {t("Episode", "भाग")} {num(i + 1, isMr)}
+                          {i === active && playing && <span className="podcasts__live"> • {t("Now playing", "सध्या चालू")}</span>}
+                        </span>
+                        <span className="podcasts__name">{title(p)}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+                {hasMore && (
+                  <li ref={sentinelRef} className="podcasts__more" aria-live="polite">
+                    {error ? (
+                      <button type="button" className="podcasts__retry" onClick={retry}>
+                        {t("Couldn't load more episodes — retry", "आणखी भाग लोड झाले नाहीत — पुन्हा प्रयत्न करा")}
+                      </button>
+                    ) : (
+                      loading && (
+                        <>
+                          <Loader2 size={16} className="spin" aria-hidden="true" />
+                          {t("Loading more episodes…", "आणखी भाग लोड होत आहेत…")}
+                        </>
+                      )
+                    )}
+                  </li>
+                )}
+              </ol>
+            </div>
           </Reveal>
         </div>
       </div>

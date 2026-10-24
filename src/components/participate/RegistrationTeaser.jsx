@@ -2,6 +2,7 @@ import { CalendarClock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
 import { useSite } from "../../context/SiteContext.jsx";
+import { editionDate } from "../../config/edition.js";
 import { enDate, mrDate } from "../../lib/format.js";
 import "../../pages/pages.css";
 
@@ -10,10 +11,11 @@ export function RegistrationTeaser() {
   const { lang } = useLang();
   const { settings } = useSite();
   const reg = settings.registration ?? {};
-  const fmt = (v) => v ? (lang === "mr" ? mrDate(v) : enDate(v)) : null;
+  const fmt = (v) => (lang === "mr" ? mrDate(v) : enDate(v));
 
-  const opensAt  = fmt(reg.opens_at)  ?? (lang === "mr" ? "५ नोव्हेंबर २०२६"  : "5 November 2026");
-  const closesAt = fmt(reg.closes_at) ?? (lang === "mr" ? "२० नोव्हेंबर २०२६" : "20 November 2026");
+  // The edition's usual window is shown until settings load
+  const opensAt  = fmt(reg.opens_at  || editionDate("11-05"));
+  const closesAt = fmt(reg.closes_at || editionDate("11-20"));
 
   return (
     <div className="card-light closed-notice" role="complementary">

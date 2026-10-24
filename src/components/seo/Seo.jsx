@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { EDITION_YEAR_MR } from "../../config/edition.js";
 import { SITE_URL } from "../../lib/api.js";
 import { assetUrl } from "../../lib/format.js";
 import { useSite } from "../../context/SiteContext.jsx";
@@ -8,7 +9,7 @@ export function Seo({ title, description, image, imageAlt, type = "website", noi
   const { settings } = useSite();
   const seo = settings.seo ?? {};
   const { pathname } = useLocation();
-  const siteName = seo.site_name || "अमृत दुर्गोत्सव २०२६";
+  const siteName = seo.site_name || `अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`;
   const fullTitle = title ? `${title} | ${siteName}` : seo.default_title || siteName;
   const desc = description || seo.default_description || "";
   const img = image || seo.og_image || "/og-image.jpg";

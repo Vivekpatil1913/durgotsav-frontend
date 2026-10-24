@@ -3,12 +3,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, Award, Image as ImageIcon, Info, Trophy } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useT } from "../../context/LanguageContext.jsx";
-import { useSite } from "../../context/SiteContext.jsx";
 import { useApi } from "../../hooks/useApi.js";
 import { AWARD_PATH } from "../../lib/award.js";
 import { prefersReducedMotion } from "../../lib/smoothScroll.js";
-import { yearFrom } from "../layout/Header.jsx";
 import { ColumnsIcon, FortIcon, MaharashtraIcon, PeopleIcon } from "./HeroIcons.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -26,7 +25,7 @@ function Brush() {
 function AwardCard() {
   const t = useT();
   const award = useApi("/shivdurg-award").data?.data;
-  const title = t("Shivdurg Bhushan Puraskar 2026", "शिवदुर्गभूषण पुरस्कार २०२६");
+  const title = t(`Shivdurg Bhushan Puraskar ${EDITION_YEAR}`, `शिवदुर्गभूषण पुरस्कार ${EDITION_YEAR_MR}`);
   const tagline = t(
     "Click the link below for full details of the award programme, its rules and conditions, and related information.",
     "पुरस्कार कार्यक्रमाची सविस्तर माहिती, नियम व अटी आणि संबंधित तपशील जाणून घेण्यासाठी खालील लिंकवर क्लिक करा.",
@@ -65,17 +64,15 @@ function AwardCard() {
       </ul>
       <p className="hero-award__note">
         <span aria-hidden="true">*</span>{" "}
-        {t("Please note: cash prizes are only for the Shivdurg Bhushan Award 2026, not for Durgotsav.", "कृपया नोंद घ्यावी: रोख पारितोषिके केवळ शिवदुर्ग भूषण पुरस्कार २०२६ साठी आहेत, दुर्गोत्सवासाठी नाहीत.")}
+        {t(`Please note: cash prizes are only for the Shivdurg Bhushan Award ${EDITION_YEAR}, not for Durgotsav.`, `कृपया नोंद घ्यावी: रोख पारितोषिके केवळ शिवदुर्ग भूषण पुरस्कार ${EDITION_YEAR_MR} साठी आहेत, दुर्गोत्सवासाठी नाहीत.`)}
       </p>
     </aside>
   );
 }
 
 export function Hero() {
-  const { settings } = useSite();
   const t = useT();
   const root = useRef(null);
-  const year = yearFrom(settings.hero?.title);
 
   const FEATURES = [
     [FortIcon, "12", t("Forts", "दुर्ग")],
@@ -124,7 +121,7 @@ export function Hero() {
         <h1 id="hero-title" className="hero__title">
           <span className="hero__pre">{t("Amrut", "अमृत")}</span>
           <span className="hero__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
-          <span className="hero__year">{t(year, year.replace(/[0-9]/g, (d) => "०१२३४५६७८९"[d]))}</span>
+          <span className="hero__year">{t(EDITION_YEAR, EDITION_YEAR_MR)}</span>
         </h1>
         <p className="hero__lead">
           {t(

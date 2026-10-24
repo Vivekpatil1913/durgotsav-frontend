@@ -2,8 +2,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Globe, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
-import { useSite } from "../../context/SiteContext.jsx";
+import { AWARD_PATH } from "../../lib/award.js";
 import { lockScroll } from "../../lib/smoothScroll.js";
 import "./header.css";
 
@@ -16,29 +17,20 @@ const NAV = [
 ];
 
 const MOBILE_EXTRA = [
-  { to: "/shivdurg-bhushan-puraskar-2026", label: { en: "Shivdurg Bhushan Award", mr: "शिवदुर्ग भूषण पुरस्कार" } },
+  { to: AWARD_PATH, label: { en: "Shivdurg Bhushan Award", mr: "शिवदुर्ग भूषण पुरस्कार" } },
   { to: "/forts",       label: { en: "12 Forts", mr: "१२ दुर्ग" } },
   { to: "/videos",      label: { en: "Videos & Podcasts", mr: "व्हिडिओ व पॉडकास्ट" } },
   { to: "/faq",         label: { en: "FAQ", mr: "प्रश्नोत्तरे" } },
   { to: "/contact",     label: { en: "Contact", mr: "संपर्क" } },
 ];
 
-const DEVANAGARI_DIGITS = "०१२३४५६७८९";
-// "अमृत दुर्गोत्सव २०२६" → "2026" (Latin digits, as in the design)
-export function yearFrom(title) {
-  const word = (title || "").split(" ").find((w) => /^[०-९0-9]{4}$/.test(w)) || "2026";
-  return word.replace(/[०-९]/g, (d) => DEVANAGARI_DIGITS.indexOf(d));
-}
-
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname, hash } = useLocation();
   const navigate = useNavigate();
-  const { settings } = useSite();
   const { lang, setLang } = useLang();
   const t = useT();
-  const year = yearFrom(settings.hero?.title);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -97,10 +89,10 @@ export function Header() {
   return (
     <header className={`site-header ${scrolled || open ? "is-solid" : ""}`}>
       <div className="site-header__bar">
-        <Link to="/" className="brand" aria-label={`Amrut Durgotsav ${year} — home`}>
+        <Link to="/" className="brand" aria-label={`Amrut Durgotsav ${EDITION_YEAR} — home`}>
           <img className="brand__emblem" src="/brand/emblem-white.webp" alt={t("Government of Maharashtra Emblem", "महाराष्ट्र शासनाचे बोधचिन्ह")} width="40" height="48" />
           <img className="brand__amrut" src="/brand/amrut-white.webp" alt="AMRUT" width="96" height="48" />
-          <img className="brand__logo" src="/brand/durgotsav-logo-320.webp" alt={t("Amrut Durgotsav 2026 Logo", "अमृत दुर्गोत्सव २०२६ बोधचिन्ह")} width="44" height="44" />
+          <img className="brand__logo" src="/brand/durgotsav-logo-320.webp" alt={t(`Amrut Durgotsav ${EDITION_YEAR} Logo`, `अमृत दुर्गोत्सव ${EDITION_YEAR_MR} बोधचिन्ह`)} width="44" height="44" />
           <span className="brand__name">{t("Durgotsav", "दुर्गोत्सव")}</span>
         </Link>
 
