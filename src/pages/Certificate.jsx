@@ -153,7 +153,8 @@ function Resubmit({ query, onDone }) {
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
-            try { setPhoto(await preparePhoto(f)); setError(""); } catch (err) { setError(err.message); }
+            e.target.value = ""; // so picking the same file again after an error retries it
+            try { setPhoto(await preparePhoto(f, t)); setError(""); } catch (err) { setError(err.message); }
           }} />
       </div>
       <Field label={t("Note (optional)", "टीप (ऐच्छिक)")}>

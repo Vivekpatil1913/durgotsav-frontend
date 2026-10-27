@@ -62,7 +62,7 @@ export default function Participate() {
     [Leaf,        t("Eco-friendly materials", "पर्यावरणपूरक साहित्य"),
       t("Prefer safe and eco-friendly materials such as clay, stone, bricks, and paper.", "माती, दगड, विटा, कागद असे सुरक्षित व पर्यावरणपूरक साहित्य वापरण्यास प्राधान्य द्या.")],
     [Camera,      t("Clear photo", "स्पष्ट छायाचित्र"),
-      t("A photo where both you and your fort replica are clearly visible.", "आपण व आपली प्रतिकृती दोन्ही स्पष्ट दिसतील असे स्वतःचे छायाचित्र.")],
+      t("One clear photo where your replica stands out — about 70% replica and 30% you (65% / 35% for a group).", "प्रतिकृती ठळकपणे दिसेल असा एक स्पष्ट फोटो — सुमारे ७०% प्रतिकृती व ३०% आपण (ग्रुप फोटोसाठी ६५% / ३५%).")],
     [ShieldAlert, t("Public safety", "सार्वजनिक सुरक्षितता"),
       t("Take care not to block roads, pedestrian paths, or fire safety routes.", "रस्ते, पादचारी मार्ग, अग्निसुरक्षा मार्ग यांना अडथळा होणार नाही याची दक्षता घ्या.")],
   ];
