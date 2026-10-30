@@ -23,7 +23,7 @@ export const PHOTO_GUIDES = {
       "In a group photo too, the fort replica must be clearly visible. The team that built it should stand beside the replica for the photo.",
       "दुर्ग प्रतिकृतीचा ग्रुप फोटो अपलोड करतानाही प्रतिकृती अगदी स्पष्ट दिसणे महत्त्वाचे आहे. प्रतिकृती घडवणाऱ्या टीमने दुर्ग प्रतिकृतीच्या बाजूला उभे राहून फोटो काढावा.",
     ],
-    share: { replica: 65, people: 35 },
+    share: { replica: 70, people: 30 },
     people: ["Team", "टीम"],
     PeopleIcon: Users,
     example: { src: "group-example", widths: [560, 960], ratio: 1460 / 1200, alt: ["A team of four posing around their fort replica", "आपल्या दुर्ग प्रतिकृतीभोवती उभी चार जणांची टीम"] },

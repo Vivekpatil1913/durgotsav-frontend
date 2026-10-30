@@ -367,12 +367,13 @@
   color: var(--on-night-muted);
   font-size: var(--text-sm);
 }
-.load-more {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: var(--space-5);
-  color: var(--on-night-muted);
+/* The previous page stays on screen, dimmed, while the next one loads */
+.gallery-results {
+  transition: opacity 0.2s ease;
+}
+.gallery-results[aria-busy="true"] {
+  opacity: 0.45;
+  pointer-events: none;
 }
 .album-total {
   font-size: var(--text-lg);

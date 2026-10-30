@@ -153,6 +153,19 @@
   .type-option:hover { transform: none; }
 }
 
+/* "WhatsApp same as mobile": the WhatsApp box then mirrors the mobile number and can't be typed in */
+.whatsapp-same {
+  margin-top: 12px;
+}
+.reg-form .input[readonly] {
+  background: var(--parchment-200);
+  color: var(--ink-700);
+  cursor: default;
+}
+.reg-form .input[readonly]:hover {
+  border-color: var(--sand-300);
+}
+
 /* ──────────────── Photo guideline ──────────────── */
 .photo-guide {
   display: grid;

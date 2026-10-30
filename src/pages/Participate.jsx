@@ -1,4 +1,5 @@
 import { CalendarClock, Camera, Leaf, ShieldAlert, Users } from "lucide-react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { RegistrationForm } from "../components/participate/RegistrationForm.jsx";
 import { Journey } from "../components/home/HomeSections.jsx";
@@ -12,8 +13,6 @@ import { useApi } from "../hooks/useApi.js";
 import { enDate, mrDate } from "../lib/format.js";
 import { Markdown, sections } from "../lib/markdown.jsx";
 import "./pages.css";
-
-const FORCE_OPEN = import.meta.env.VITE_REGISTRATION_FORCE_OPEN === "true";
 
 function ClosedNotice({ status }) {
   const { settings } = useSite();
@@ -51,6 +50,11 @@ export default function Participate() {
   const t = useT();
   const { lang } = useLang();
   const status = useRegistrationStatus();
+  const { refresh } = useSite();
+  // Registration is opened and closed from Admin → Settings, so check it again every time this page opens
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
   const rules = useApi("/pages/rules").data?.data;
   const rulesTitle    = rules ? (lang === "mr" ? rules.title    : (rules.title_en    || rules.title))    : null;
   const rulesBody     = rules ? (lang === "mr" ? rules.body     : (rules.body_en     || rules.body))     : null;
@@ -62,7 +66,7 @@ export default function Participate() {
     [Leaf,        t("Eco-friendly materials", "पर्यावरणपूरक साहित्य"),
       t("Prefer safe and eco-friendly materials such as clay, stone, bricks, and paper.", "माती, दगड, विटा, कागद असे सुरक्षित व पर्यावरणपूरक साहित्य वापरण्यास प्राधान्य द्या.")],
     [Camera,      t("Clear photo", "स्पष्ट छायाचित्र"),
-      t("One clear photo where your replica stands out — about 70% replica and 30% you (65% / 35% for a group).", "प्रतिकृती ठळकपणे दिसेल असा एक स्पष्ट फोटो — सुमारे ७०% प्रतिकृती व ३०% आपण (ग्रुप फोटोसाठी ६५% / ३५%).")],
+      t("One clear photo where your replica stands out — about 70% replica and 30% you or your team.", "प्रतिकृती ठळकपणे दिसेल असा एक स्पष्ट फोटो — सुमारे ७०% प्रतिकृती व ३०% आपण किंवा आपली टीम.")],
     [ShieldAlert, t("Public safety", "सार्वजनिक सुरक्षितता"),
       t("Take care not to block roads, pedestrian paths, or fire safety routes.", "रस्ते, पादचारी मार्ग, अग्निसुरक्षा मार्ग यांना अडथळा होणार नाही याची दक्षता घ्या.")],
   ];
@@ -107,7 +111,7 @@ export default function Participate() {
             </p>
           </div>
           <div id="register" className="participate-form">
-            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : (FORCE_OPEN || status.open) ? <RegistrationForm /> : <ClosedNotice status={status} />}
+            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : status.open ? <RegistrationForm /> : <ClosedNotice status={status} />}
           </div>
         </div>
       </section>

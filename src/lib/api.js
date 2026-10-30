@@ -15,9 +15,11 @@ export function toApiError(err) {
 }
 
 // Tiny in-memory cache for GET requests so navigating back and forth doesn't refetch.
+// Bounded, so paging through thousands of gallery pages can't grow memory without limit.
 const cache = new Map();
 const inflight = new Map();
 const TTL = 60_000;
+const MAX_ENTRIES = 200;
 
 export async function getCached(url, params) {
   const key = `${url}?${new URLSearchParams(params || {}).toString()}`;
@@ -27,6 +29,8 @@ export async function getCached(url, params) {
   const promise = http
     .get(url, { params })
     .then((res) => {
+      cache.delete(key);
+      if (cache.size >= MAX_ENTRIES) cache.delete(cache.keys().next().value);
       cache.set(key, { at: Date.now(), data: res.data });
       return res.data;
     })

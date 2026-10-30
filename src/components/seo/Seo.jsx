@@ -22,9 +22,9 @@ export function Seo({ title, description, image, imageAlt, type = "website", noi
       <title>{fullTitle}</title>
       <meta name="description" content={desc} />
       <link rel="canonical" href={canonical} />
-      <link rel="alternate" hreflang="en" href={canonical} />
-      <link rel="alternate" hreflang="mr" href={canonical} />
-      <link rel="alternate" hreflang="x-default" href={canonical} />
+      <link rel="alternate" hrefLang="en" href={canonical} />
+      <link rel="alternate" hrefLang="mr" href={canonical} />
+      <link rel="alternate" hrefLang="x-default" href={canonical} />
       {noindex && <meta name="robots" content="noindex" />}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={desc} />

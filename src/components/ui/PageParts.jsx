@@ -57,10 +57,13 @@ export function Pagination({ page, totalPages, onChange }) {
   const t = useT();
   if (totalPages <= 1) return null;
   const fmt = (n) => lang === "mr" ? mr(n) : String(n);
+  // Only the first, last and the two either side of the current page — never a loop over every page
   const pages = [];
-  for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || Math.abs(p - page) <= 2) pages.push(p);
-    else if (pages[pages.length - 1] !== "…") pages.push("…");
+  for (const p of [1, page - 2, page - 1, page, page + 1, page + 2, totalPages]) {
+    const last = pages[pages.length - 1] ?? 0;
+    if (p < 1 || p > totalPages || p <= last) continue;
+    if (last && p - last > 1) pages.push("…");
+    pages.push(p);
   }
   return (
     <nav className="pagination" aria-label={t("Pages", "पृष्ठे")}>

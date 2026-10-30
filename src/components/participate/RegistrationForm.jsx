@@ -76,9 +76,9 @@ const OTHER_FORT = "other";
 const NOTES_MIN = 2;
 const NOTES_MAX = 300;
 
-const EMPTY = { participant_type: "individual", division_id: "", name: "", organization_name: "", members_count: "", phone: "", email: "", district_id: "", taluka_id: "", fort_id: "", replica_notes: "", consent: false, website: "" };
+const EMPTY = { participant_type: "individual", division_id: "", name: "", organization_name: "", members_count: "", phone: "", whatsapp_number: "", whatsapp_same: false, email: "", district_id: "", taluka_id: "", fort_id: "", replica_notes: "", consent: false, website: "" };
 const STEP_FIELDS = [
-  ["participant_type", "division_id", "name", "organization_name", "members_count", "phone", "email", "district_id", "taluka_id"],
+  ["participant_type", "division_id", "name", "organization_name", "members_count", "phone", "whatsapp_number", "email", "district_id", "taluka_id"],
   ["fort_id", "replica_notes", "photo"],
   ["consent"],
 ];
@@ -88,6 +88,9 @@ const STEP_FIELDS = [
 const newSubmissionId = () =>
   globalThis.crypto?.randomUUID?.() ??
   "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (c ^ (Math.random() * 16) >> (c / 4)).toString(16));
+
+// While "same as mobile" is ticked the WhatsApp box mirrors the mobile number; unticking brings back what was typed there.
+const whatsappOf = (v) => (v.whatsapp_same ? v.phone : v.whatsapp_number);
 
 function validate(step, v, photo, t) {
   const e = {};
@@ -105,6 +108,9 @@ function validate(step, v, photo, t) {
       else if (n > MEMBERS_MAX) e.members_count = t(`Please enter at most ${MEMBERS_MAX} members.`, `कमाल ${mr(MEMBERS_MAX)} सदस्य लिहा.`);
     }
     if (!/^[6-9]\d{9}$/.test(v.phone)) e.phone = t("Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).", "१० अंकी मोबाईल क्रमांक लिहा (६, ७, ८ किंवा ९ ने सुरू होणारा).");
+    if (!v.whatsapp_same && v.whatsapp_number && !/^[6-9]\d{9}$/.test(v.whatsapp_number)) {
+      e.whatsapp_number = t("Enter a valid 10-digit WhatsApp number, or leave it blank.", "१० अंकी WhatsApp क्रमांक लिहा, किंवा रिकामे ठेवा.");
+    }
     if (!v.email.trim()) e.email = t("Please enter your email address.", "ईमेल पत्ता लिहा.");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = t("Email address is invalid.", "ईमेल पत्ता योग्य नाही.");
     if (!v.district_id) e.district_id = t("Please select your district.", "आपला जिल्हा निवडा.");
@@ -139,6 +145,7 @@ export function RegistrationForm() {
   const [result, setResult] = useState(null);
   const topRef = useRef(null);
   const fileRef = useRef(null);
+  const whatsappRef = useRef(null);
   const photoRef = useRef(photo);
   photoRef.current = photo;
   const submissionId = useRef(newSubmissionId());
@@ -150,16 +157,25 @@ export function RegistrationForm() {
   ];
   const type = typeOf(values.participant_type);
   const guide = type.value === "individual" ? PHOTO_GUIDES.individual : PHOTO_GUIDES.group;
+  const whatsapp = whatsappOf(values);
 
   // The preview is revoked when replaced/removed; this frees whatever is left on unmount.
   useEffect(() => () => photoRef.current && URL.revokeObjectURL(photoRef.current.preview), []);
 
   const set = (name) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    const clean = name === "phone" ? digitsOnly(value, 10) : name === "members_count" ? digitsOnly(value, 5) : value;
+    const clean = name === "phone" || name === "whatsapp_number" ? digitsOnly(value, 10) : name === "members_count" ? digitsOnly(value, 5) : value;
     setValues((v) => ({ ...v, [name]: clean }));
     if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
   };
+
+  function setWhatsappSame(e) {
+    const same = e.target.checked;
+    setValues((v) => ({ ...v, whatsapp_same: same }));
+    setErrors((er) => ({ ...er, whatsapp_number: undefined }));
+    // unticked: the numbers differ, so take the participant straight to the WhatsApp box
+    if (!same) requestAnimationFrame(() => whatsappRef.current?.focus());
+  }
 
   // A different type is a fresh registration: everything filled so far (photo included) is cleared.
   function chooseType(value) {
@@ -217,6 +233,7 @@ export function RegistrationForm() {
     if (type.org && values.organization_name.trim()) body.append("organization_name", values.organization_name.trim());
     if (type.members) body.append("members_count", values.members_count);
     body.append("phone", values.phone);
+    if (whatsapp) body.append("whatsapp_number", whatsapp);
     body.append("email", values.email.trim());
     body.append("country", "India");
     body.append("district_id", values.district_id);
@@ -237,7 +254,6 @@ export function RegistrationForm() {
         onUploadProgress: (p) => p.total && setProgress(Math.round((p.loaded / p.total) * 100)),
       });
       setResult(data.data);
-      topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
       const apiErr = toApiError(err);
       const fieldErrors = apiErr.details || {};
@@ -361,9 +377,26 @@ export function RegistrationForm() {
                   label={t("Mobile Number", "मोबाईल क्रमांक")}
                   required
                   error={errors.phone}
-                  hint={t("The certificate notification will be sent to this number.", "अभिनंदन पत्राची सूचना या क्रमांकावर येईल.")}
                 >
                   {(p) => <input {...p} className="input" type="tel" inputMode="numeric" value={values.phone} onChange={set("phone")} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="tel-national" />}
+                </Field>
+                <label className="checkbox whatsapp-same">
+                  <input type="checkbox" checked={values.whatsapp_same} onChange={setWhatsappSame} />
+                  <span>{t("My WhatsApp number is the same as my mobile number", "माझा WhatsApp क्रमांक व मोबाईल क्रमांक एकच आहे")}</span>
+                </label>
+              </div>
+              <div data-field="whatsapp_number">
+                <Field
+                  label={`${t("WhatsApp Number", "WhatsApp क्रमांक")} ${t("(optional)", "(ऐच्छिक)")}`}
+                  error={errors.whatsapp_number}
+                  hint={values.whatsapp_same
+                    ? t("Filled from your mobile number. Untick the box to enter a different one.", "मोबाईल क्रमांकावरून भरला आहे. वेगळा क्रमांक लिहिण्यासाठी खूण काढा.")
+                    : t("Leave blank if you don't use WhatsApp.", "WhatsApp वापरत नसल्यास रिकामे ठेवा.")}
+                >
+                  {(p) => (
+                    <input {...p} ref={whatsappRef} className="input" type="tel" inputMode="numeric" value={whatsapp} onChange={set("whatsapp_number")}
+                      readOnly={values.whatsapp_same} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="off" />
+                  )}
                 </Field>
               </div>
               <div data-field="email">
@@ -553,6 +586,7 @@ export function RegistrationForm() {
                   <div><dt>{t("Name", "नाव")}</dt><dd>{values.name}</dd></div>
                   {type.members && <div><dt>{t("Members", "सदस्य")}</dt><dd>{t(values.members_count, mr(values.members_count))}</dd></div>}
                   <div><dt>{t("Mobile", "मोबाईल")}</dt><dd>{values.phone}</dd></div>
+                  {whatsapp && <div><dt>WhatsApp</dt><dd>{whatsapp}</dd></div>}
                   {values.email && <div><dt>{t("Email", "ईमेल")}</dt><dd>{values.email}</dd></div>}
                   <div><dt>{t("Division", "विभाग")}</dt><dd>{(() => { const div = divisions.find((d) => String(d.id) === String(values.division_id)); return div ? (lang === "mr" ? div.name_mr || div.name_en : div.name_en || div.name_mr) : ""; })()}</dd></div>
                   <div><dt>{t("District", "जिल्हा")}</dt><dd>{districtLabel}</dd></div>
@@ -611,6 +645,12 @@ export function RegistrationForm() {
 function Success({ result, onReset }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
+  const cardRef = useRef(null);
+  // The card replaces the much taller form, so the old scroll position would land below it — bring it into view once mounted.
+  // Braces matter: newer browsers return a Promise from scrollIntoView, and React would call it as the effect's cleanup and crash.
+  useEffect(() => {
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(result.registration_no);
@@ -621,7 +661,7 @@ function Success({ result, onReset }) {
     }
   };
   return (
-    <motion.div className="reg-success card-light" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} role="status" aria-live="polite">
+    <motion.div ref={cardRef} className="reg-success card-light" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} role="status" aria-live="polite">
       <motion.span className="reg-success__icon" initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.15 }}>
         <CheckCircle2 aria-hidden="true" />
       </motion.span>

@@ -1,65 +1,61 @@
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { StatsBand } from "../components/home/HomeSections.jsx";
 import { Highlights2025 } from "../components/gallery/Highlights2025.jsx";
 import { PhotoFilters, PhotoGrid } from "../components/gallery/PhotoGrid.jsx";
 import { Seo } from "../components/seo/Seo.jsx";
-import { EmptyState, ErrorState, PageHero, SkeletonGrid } from "../components/ui/PageParts.jsx";
+import { EmptyState, ErrorState, PageHero, Pagination, SkeletonGrid } from "../components/ui/PageParts.jsx";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useApi } from "../hooks/useApi.js";
-import { http, toApiError } from "../lib/api.js";
 import { mrNumber } from "../lib/format.js";
+import { scrollToElement } from "../lib/smoothScroll.js";
 import "./pages.css";
 
-const PAGE = 24;
+const PAGE_SIZE = 10;
 
+// Page and filters live in the URL (?page=&district=&fort=) and go to the API as-is — the server filters,
+// counts and pages, so only PAGE_SIZE photos are ever fetched or rendered, however large the gallery grows.
 export default function Gallery() {
   const t = useT();
   const { lang } = useLang();
+  const [params, setParams] = useSearchParams();
+  const asked = Number(params.get("page"));
+  const page = Number.isSafeInteger(asked) && asked > 1 ? asked : 1;
+  const filters = { district_id: params.get("district") || "", fort_id: params.get("fort") || "" };
+  const query = { page, limit: PAGE_SIZE, ...(filters.district_id && { district_id: filters.district_id }), ...(filters.fort_id && { fort_id: filters.fort_id }) };
+  const { data, error, loading, fetching, reload } = useApi("/gallery", query);
   const districts = useApi("/districts").data?.data ?? [];
   const forts = useApi("/forts").data?.data ?? [];
-  const [filters, setFilters] = useState({ district_id: "", fort_id: "" });
-  const [state, setState] = useState({ items: [], page: 0, totalPages: 1, total: 0, loading: true, error: null });
-  const sentinel = useRef(null);
-  const loadingRef = useRef(false);
+  const top = useRef(null);
 
-  async function load(page, reset = false) {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const params = { page, limit: PAGE, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) };
-      const { data } = await http.get("/gallery", { params });
-      setState((s) => ({
-        items: reset ? data.data : [...s.items, ...data.data],
-        page,
-        totalPages: data.meta.totalPages,
-        total: data.meta.total,
-        loading: false,
-        error: null,
-      }));
-    } catch (err) {
-      setState((s) => ({ ...s, loading: false, error: toApiError(err) }));
-    } finally {
-      loadingRef.current = false;
-    }
-  }
+  const update = (next, options) => {
+    const p = new URLSearchParams();
+    if (next.page > 1) p.set("page", next.page);
+    if (next.district_id) p.set("district", next.district_id);
+    if (next.fort_id) p.set("fort", next.fort_id);
+    setParams(p, options);
+  };
+  const goToPage = (p) => {
+    update({ ...filters, page: p });
+    scrollToElement(top.current);
+  };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(1, true); }, [filters.district_id, filters.fort_id]);
-
+  // The API clamps a page past the end (an old link, or photos removed since) — keep the URL in step with it,
+  // and replace an invalid ?page= (0, -3, 1.5, abc) with the page actually shown
+  const served = data?.meta.page;
+  const pageParam = params.get("page");
   useEffect(() => {
-    const el = sentinel.current;
-    if (!el) return undefined;
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !loadingRef.current && state.page < state.totalPages) load(state.page + 1);
-    }, { rootMargin: "600px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
+    if (!fetching && served && pageParam !== (served > 1 ? String(served) : null)) update({ ...filters, page: served }, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page, state.totalPages]);
+  }, [fetching, served, pageParam]);
 
-  const countLabel = lang === "mr" ? `${mrNumber(state.total)} छायाचित्रे` : `${state.total} photos`;
+  const photos = data?.data ?? [];
+  const meta = data?.meta;
+  const from = meta ? (meta.page - 1) * meta.limit + 1 : 0;
+  const to = from + photos.length - 1;
+  const rangeLabel = lang === "mr"
+    ? `${mrNumber(meta?.total ?? 0)} पैकी ${mrNumber(from)}–${mrNumber(to)} छायाचित्रे`
+    : `${from}–${to} of ${meta?.total ?? 0} photos`;
 
   return (
     <>
@@ -80,23 +76,24 @@ export default function Gallery() {
       />
       <Highlights2025 />
       <section className="section surface-night">
-        <div className="container">
+        <div className="container" ref={top}>
           <div className="gallery-toolbar">
-            <PhotoFilters districts={districts} forts={forts} value={filters} onChange={setFilters} />
-            {!state.loading && <p className="gallery-count" aria-live="polite">{countLabel}</p>}
+            <PhotoFilters districts={districts} forts={forts} value={filters} onChange={(f) => update({ ...f, page: 1 })} />
+            {photos.length > 0 && <p className="gallery-count" aria-live="polite">{rangeLabel}</p>}
           </div>
-          {state.error && <ErrorState error={state.error} onRetry={() => load(1, true)} />}
-          {state.loading && state.items.length === 0 && <SkeletonGrid count={8} ratio="3 / 4" />}
-          {!state.loading && !state.error && state.items.length === 0 && (
+          {error && <ErrorState error={error} onRetry={reload} />}
+          {loading && <SkeletonGrid count={PAGE_SIZE} ratio="3 / 4" />}
+          {!loading && !fetching && data && photos.length === 0 && (
             <EmptyState title={t("No photos available yet", "अजून छायाचित्रे उपलब्ध नाहीत")}>
               {t("Selected photos for this filter will appear here soon.", "या निवडीसाठी निवडक छायाचित्रे लवकरच येथे दिसतील.")}
             </EmptyState>
           )}
-          {state.items.length > 0 && <PhotoGrid photos={state.items} />}
-          <div ref={sentinel} aria-hidden="true" />
-          {state.loading && state.items.length > 0 && (
-            <p className="load-more"><Loader2 className="spin" aria-hidden="true" /> {t("Loading more photos…", "आणखी छायाचित्रे लोड होत आहेत…")}</p>
+          {photos.length > 0 && (
+            <div className="gallery-results" aria-busy={fetching}>
+              <PhotoGrid photos={photos} />
+            </div>
           )}
+          {meta && <Pagination page={Math.min(page, meta.totalPages)} totalPages={meta.totalPages} onChange={goToPage} />}
         </div>
       </section>
       <StatsBand />
