@@ -4,7 +4,7 @@ import { useLang, useT } from "../../context/LanguageContext.jsx";
 
 // SRS §3 "I am not a robot": Google reCAPTCHA v2 (checkbox) or Cloudflare Turnstile — whichever the API's settings name
 // (settings.captcha = { provider, site_key }). The API checks the token before it stores anything.
-// provider "dummy" (development only) draws a static look-alike checkbox instead, with no script.
+// provider "dummy" draws a static look-alike checkbox instead, with no script.
 const ONLOAD = "__durgotsavCaptchaLoaded";
 const SCRIPT = {
   recaptcha: (hl) => `https://www.google.com/recaptcha/api.js?onload=${ONLOAD}&render=explicit&hl=${hl}`,
@@ -101,7 +101,7 @@ const ProviderWidget = forwardRef(function ProviderWidget({ config, onChange }, 
 });
 
 // provider "dummy": the same "I'm not a robot" box drawn locally — no script, no "testing purposes only" banner.
-// The API accepts any token in this mode and refuses to start with it in production.
+// The API accepts any token in this mode (a tick is still required), so it does not stop scripted submissions.
 const DummyWidget = forwardRef(function DummyWidget({ onChange }, ref) {
   const t = useT();
   const changed = useRef(onChange);
