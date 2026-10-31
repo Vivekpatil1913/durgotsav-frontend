@@ -400,7 +400,7 @@ function StatusTab({ initial }) {
   );
 }
 
-// ---------------------------------------------------------------- verify (also the target of the QR code)
+// ---------------------------------------------------------------- verify (by the number printed on the certificate)
 
 function VerifyTab({ initial }) {
   const t = useT();
@@ -428,7 +428,7 @@ function VerifyTab({ initial }) {
       setBusy(false);
     }
   }
-  // Opened from the QR code on a certificate (?tab=verify&no=…): check it straight away
+  // Opened from a link with the number filled in (?tab=verify&no=…): check it straight away
   useEffect(() => {
     if (initial) verify(initial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -438,8 +438,8 @@ function VerifyTab({ initial }) {
     <div className="stack">
       <p className="muted">
         {t(
-          `Scan the QR code on the certificate, or enter the number printed at the bottom (e.g. AMRUT-${NUMBER_PREFIX}-010123) to verify it is authentic.`,
-          `अभिनंदन पत्रावरील QR कोड स्कॅन करा, किंवा खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-${NUMBER_PREFIX}-010123) लिहून ते अधिकृत आहे का ते तपासा.`
+          `Enter the number printed at the bottom of the certificate (e.g. AMRUT-${NUMBER_PREFIX}-010123) to verify it is authentic.`,
+          `अभिनंदन पत्राच्या खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-${NUMBER_PREFIX}-010123) लिहून ते अधिकृत आहे का ते तपासा.`
         )}
       </p>
       <form className="cluster verify-form" onSubmit={(e) => { e.preventDefault(); verify(number); }} noValidate>
@@ -471,7 +471,7 @@ export default function Certificate() {
   const initialReg = params.get("registration") || "";
   const initialNo = params.get("no") || "";
   const TABS = TABS_DEF.map(([k, label, Icon]) => [k, label[lang] || label.en, Icon]);
-  // Earlier emails link here with ?registration=… and QR codes with ?no=…: open the tab that answers them
+  // Earlier emails link here with ?registration=… and verification links with ?no=…: open the tab that answers them
   const fallback = initialNo ? "verify" : initialReg ? "status" : "download";
   const tab = TABS.some(([k]) => k === params.get("tab")) ? params.get("tab") : fallback;
   const select = (key) => setParams((p) => { p.set("tab", key); return p; }, { replace: true });
