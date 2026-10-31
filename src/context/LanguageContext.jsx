@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const LanguageContext = createContext({ lang: "en", setLang: () => {} });
+// SRS v2.1 §7: native Marathi interface. Marathi is the default; a visitor's own choice (header toggle) is remembered.
+const LanguageContext = createContext({ lang: "mr", setLang: () => {} });
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
-    try { return localStorage.getItem("durgotsav-lang") || "en"; } catch { return "en"; }
+    try { return localStorage.getItem("durgotsav-lang") || "mr"; } catch { return "mr"; }
   });
 
   const setLang = (l) => {

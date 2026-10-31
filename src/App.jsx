@@ -14,6 +14,7 @@ const Forts = lazy(() => import("./pages/Forts.jsx"));
 const FortDetail = lazy(() => import("./pages/FortDetail.jsx"));
 const Participate = lazy(() => import("./pages/Participate.jsx"));
 const Certificate = lazy(() => import("./pages/Certificate.jsx"));
+const CertificateLink = lazy(() => import("./pages/CertificateLink.jsx"));
 const Gallery = lazy(() => import("./pages/Gallery.jsx"));
 const Album = lazy(() => import("./pages/Album.jsx"));
 const Videos = lazy(() => import("./pages/Videos.jsx"));
@@ -43,6 +44,8 @@ const router = createBrowserRouter([
       { path: "forts/:slug", element: <FortDetail /> },
       { path: "participate", element: <Participate /> },
       { path: "certificate", element: <Certificate /> },
+      // direct certificate link sent by SMS / email
+      { path: "c/:token", element: <CertificateLink /> },
       { path: "gallery", element: <Gallery /> },
       { path: "album", element: <Album /> },
       { path: "videos", element: <Videos /> },

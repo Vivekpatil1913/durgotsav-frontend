@@ -3,8 +3,18 @@ import { useT } from "../../context/LanguageContext.jsx";
 import { mr } from "../../lib/format.js";
 
 // The campaign's photo rule: an individual stands beside the replica, a team poses around it.
-// `share` is how much of the frame the replica vs. the builder(s) should fill; `example` is a model
-// photo (public/images/photo-guide) and its width/height ratio, used to line the two up at equal height.
+// `share` is how much of the frame the replica vs. the builder(s) should fill (SRS v2.1 §4: about 75 % fort replica,
+// 25 % participant selfie / team); `example` is a model photo (public/images/photo-guide) and its width/height ratio,
+// used to line the two up at equal height.
+const SHARE = { replica: 75, people: 25 };
+
+// What the single-page form shows next to the upload: one rule for everyone (it no longer asks who is registering)
+export const PHOTO_RULE = {
+  share: SHARE,
+  people: ["You / your team", "आपण / आपली टीम"],
+  PeopleIcon: Users,
+};
+
 export const PHOTO_GUIDES = {
   individual: {
     title: ["Individual photo", "वैयक्तिक फोटो"],
@@ -12,7 +22,7 @@ export const PHOTO_GUIDES = {
       "The fort replica must stand out clearly in the photo. We expect a photo of the person who built it standing beside the replica.",
       "दुर्ग प्रतिकृतीचा वैयक्तिक फोटो अपलोड करताना प्रतिकृती ठळकपणे दिसणे महत्त्वाचे आहे. प्रतिकृती घडवणारी व्यक्ती प्रतिकृतीच्या बाजूला उभी आहे, असा फोटो अपेक्षित आहे.",
     ],
-    share: { replica: 70, people: 30 },
+    share: SHARE,
     people: ["Builder", "घडवणारी व्यक्ती"],
     PeopleIcon: User,
     example: { src: "individual-example", widths: [400, 720], ratio: 960 / 1080, alt: ["A participant standing beside her fort replica", "आपल्या दुर्ग प्रतिकृतीच्या बाजूला उभी सहभागी"] },
@@ -23,7 +33,7 @@ export const PHOTO_GUIDES = {
       "In a group photo too, the fort replica must be clearly visible. The team that built it should stand beside the replica for the photo.",
       "दुर्ग प्रतिकृतीचा ग्रुप फोटो अपलोड करतानाही प्रतिकृती अगदी स्पष्ट दिसणे महत्त्वाचे आहे. प्रतिकृती घडवणाऱ्या टीमने दुर्ग प्रतिकृतीच्या बाजूला उभे राहून फोटो काढावा.",
     ],
-    share: { replica: 70, people: 30 },
+    share: SHARE,
     people: ["Team", "टीम"],
     PeopleIcon: Users,
     example: { src: "group-example", widths: [560, 960], ratio: 1460 / 1200, alt: ["A team of four posing around their fort replica", "आपल्या दुर्ग प्रतिकृतीभोवती उभी चार जणांची टीम"] },

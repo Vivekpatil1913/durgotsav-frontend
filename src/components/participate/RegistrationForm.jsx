@@ -1,87 +1,30 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ArrowRight, Building2, Camera, Check, CheckCircle2, Copy, GraduationCap, House, ImagePlus, Landmark, Loader2, RefreshCw, School, Trash2, User, Users } from "lucide-react";
+import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, ImagePlus, Loader2, Pencil, RefreshCw, Send, Smartphone, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
 import { useLang, useT } from "../../context/LanguageContext.jsx";
+import { useSite } from "../../context/SiteContext.jsx";
 import { useApi } from "../../hooks/useApi.js";
 import { http, toApiError } from "../../lib/api.js";
 import { mr } from "../../lib/format.js";
 import { MAX_UPLOAD_MB, preparePhoto } from "../../lib/image.js";
+import "../certificate/certificate.css";
+import { Modal } from "../ui/Modal.jsx";
+import { Captcha } from "./Captcha.jsx";
 import { CustomSelect, digitsOnly, Field } from "./fields.jsx";
-import { FrameShare, PHOTO_GUIDES, PhotoExamples } from "./PhotoGuide.jsx";
+import { FrameShare, PHOTO_RULE, PhotoExamples } from "./PhotoGuide.jsx";
+import { spokenDigits, VoiceButton, VoiceLanguage } from "./VoiceInput.jsx";
 import "./registration.css";
 
-// Who is registering (server: PARTICIPANT_TYPES). Every type but "individual" names its group (`org`,
-// sent as organization_name) and says how many members built the replica (`members`, sent as members_count).
-// Labels are [English, Marathi].
-const REPRESENTATIVE = ["Representative's Full Name", "प्रतिनिधीचे पूर्ण नाव"];
-const PARTICIPANT_TYPES = [
-  {
-    value: "individual", Icon: User, label: ["Individual", "वैयक्तिक"],
-    about: ["You built the replica on your own.", "प्रतिकृती आपण एकट्याने बनवली आहे."],
-    name: ["Full Name", "पूर्ण नाव"],
-  },
-  {
-    value: "family", Icon: House, label: ["Family", "कुटुंब"],
-    about: ["Built together with your family members.", "कुटुंबातील सदस्यांनी मिळून बनवली आहे."],
-    name: ["Head of Family's Full Name", "कुटुंबप्रमुखाचे पूर्ण नाव"],
-    org: ["Family Name", "कुटुंबाचे नाव"], orgOptional: true, orgExample: ["e.g. Patil Family", "उदा. पाटील परिवार"],
-    members: ["Number of family members", "कुटुंबातील सदस्य संख्या"],
-  },
-  {
-    value: "group", Icon: Users, label: ["Friends / Mandal", "मित्र / मंडळ"],
-    about: ["A group of friends, a mandal or a team.", "मित्रांचा ग्रुप, मंडळ किंवा टीम."],
-    name: REPRESENTATIVE,
-    org: ["Group / Mandal Name", "ग्रुप / मंडळाचे नाव"],
-    members: ["Number of members", "सदस्य संख्या"],
-  },
-  {
-    value: "housing_society", Icon: Building2, label: ["Housing Society", "गृहनिर्माण संस्था"],
-    about: ["Residents of a housing society, together.", "गृहनिर्माण संस्थेतील रहिवाशांनी मिळून."],
-    name: REPRESENTATIVE,
-    org: ["Housing Society Name", "गृहनिर्माण संस्थेचे नाव"],
-    members: ["Number of participating residents", "सहभागी रहिवाशांची संख्या"],
-  },
-  {
-    value: "school", Icon: School, label: ["School", "शाळा"],
-    about: ["Students of a school, with their teachers.", "शाळेचे विद्यार्थी व शिक्षक."],
-    name: ["Teacher / Representative's Full Name", "शिक्षक / प्रतिनिधीचे पूर्ण नाव"],
-    org: ["School Name", "शाळेचे नाव"],
-    members: ["Number of participating students", "सहभागी विद्यार्थ्यांची संख्या"],
-  },
-  {
-    value: "college", Icon: GraduationCap, label: ["College", "महाविद्यालय"],
-    about: ["Students of a college.", "महाविद्यालयाचे विद्यार्थी."],
-    name: ["Professor / Representative's Full Name", "प्राध्यापक / प्रतिनिधीचे पूर्ण नाव"],
-    org: ["College Name", "महाविद्यालयाचे नाव"],
-    members: ["Number of participating students", "सहभागी विद्यार्थ्यांची संख्या"],
-  },
-  {
-    value: "organization", Icon: Landmark, label: ["Organisation", "संस्था"],
-    about: ["An NGO, company, club or other organisation.", "स्वयंसेवी संस्था, कंपनी, क्लब किंवा इतर संस्था."],
-    name: REPRESENTATIVE,
-    org: ["Organisation Name", "संस्थेचे नाव"],
-    members: ["Number of members", "सदस्य संख्या"],
-  },
-];
-const typeOf = (value) => PARTICIPANT_TYPES.find((p) => p.value === value) ?? PARTICIPANT_TYPES[0];
-
-const MEMBERS_MIN = 2;
-const MEMBERS_MAX = 10000;
-
-// Explicit dropdown choice for a fort outside the list; sent to the API as no fort_id.
-const OTHER_FORT = "other";
-
-const NOTES_MIN = 2;
-const NOTES_MAX = 300;
-
-const EMPTY = { participant_type: "individual", division_id: "", name: "", organization_name: "", members_count: "", phone: "", whatsapp_number: "", whatsapp_same: false, email: "", district_id: "", taluka_id: "", fort_id: "", replica_notes: "", consent: false, website: "" };
-const STEP_FIELDS = [
-  ["participant_type", "division_id", "name", "organization_name", "members_count", "phone", "whatsapp_number", "email", "district_id", "taluka_id"],
-  ["fort_id", "replica_notes", "photo"],
-  ["consent"],
-];
+// SRS v2.1 §2: one page, no steps. Name (a person, organisation, family or society — one field), mobile, optional
+// WhatsApp and email, district, photo, consent, then "I am not a robot" and Submit → check-your-details pop-up →
+// "registered" pop-up. The certificate is generated once an admin approves the registration; the participant follows
+// it on their own status page (/c/<token>, also sent by SMS). Any number of registrations may use one mobile number.
+const NAME_MAX = 150;
+const EMPTY = { name: "", phone: "", whatsapp_number: "", whatsapp_same: false, email: "", district_id: "", consent: false, website: "" };
+// Kept for "Register another": the same person often registers more replicas with the same number
+const KEEP_FOR_NEXT = ["phone", "whatsapp_number", "whatsapp_same", "email", "district_id"];
+const FIELD_ORDER = ["name", "phone", "whatsapp_number", "email", "district_id", "photo", "consent", "captcha"];
 
 // One id per form fill, sent with every submit attempt so a retry after a dropped connection
 // returns the registration already saved instead of creating a second one.
@@ -92,81 +35,64 @@ const newSubmissionId = () =>
 // While "same as mobile" is ticked the WhatsApp box mirrors the mobile number; unticking brings back what was typed there.
 const whatsappOf = (v) => (v.whatsapp_same ? v.phone : v.whatsapp_number);
 
-function validate(step, v, photo, t) {
+function validate(v, photo, t) {
   const e = {};
-  if (step === 0) {
-    const type = typeOf(v.participant_type);
-    if (!v.division_id) e.division_id = t("Please select your division.", "आपला विभाग निवडा.");
-    if (v.name.trim().length < 2) e.name = t("Please enter your full name.", "कृपया पूर्ण नाव लिहा.");
-    if (type.org && !type.orgOptional && !v.organization_name.trim()) {
-      e.organization_name = t(`Please enter the ${type.org[0].toLowerCase()}.`, `${type.org[1]} लिहा.`);
-    }
-    if (type.members) {
-      const n = Number(v.members_count);
-      if (!v.members_count) e.members_count = t("Please enter how many members built the replica.", "प्रतिकृती बनवणाऱ्या सदस्यांची संख्या लिहा.");
-      else if (n < MEMBERS_MIN) e.members_count = t(`A group needs at least ${MEMBERS_MIN} members.`, `गटात किमान ${mr(MEMBERS_MIN)} सदस्य असावेत.`);
-      else if (n > MEMBERS_MAX) e.members_count = t(`Please enter at most ${MEMBERS_MAX} members.`, `कमाल ${mr(MEMBERS_MAX)} सदस्य लिहा.`);
-    }
-    if (!/^[6-9]\d{9}$/.test(v.phone)) e.phone = t("Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).", "१० अंकी मोबाईल क्रमांक लिहा (६, ७, ८ किंवा ९ ने सुरू होणारा).");
-    if (!v.whatsapp_same && v.whatsapp_number && !/^[6-9]\d{9}$/.test(v.whatsapp_number)) {
-      e.whatsapp_number = t("Enter a valid 10-digit WhatsApp number, or leave it blank.", "१० अंकी WhatsApp क्रमांक लिहा, किंवा रिकामे ठेवा.");
-    }
-    if (!v.email.trim()) e.email = t("Please enter your email address.", "ईमेल पत्ता लिहा.");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = t("Email address is invalid.", "ईमेल पत्ता योग्य नाही.");
-    if (!v.district_id) e.district_id = t("Please select your district.", "आपला जिल्हा निवडा.");
-    if (!v.taluka_id) e.taluka_id = t("Please select your taluka.", "आपला तालुका निवडा.");
+  if (v.name.trim().length < 2) {
+    e.name = t("Please enter the full name, or the name of the organisation / family / society.", "कृपया पूर्ण नाव, किंवा संस्था / कुटुंब / सोसायटीचे नाव लिहा.");
   }
-  if (step === 1) {
-    if (!v.fort_id) e.fort_id = t("Please select the fort your replica is based on.", "आपली प्रतिकृती कोणत्या दुर्गाची आहे ते निवडा.");
-    if (!photo) e.photo = t("Please select a photo of your replica with its builder(s).", "प्रतिकृती व ती घडवणाऱ्यांचा फोटो निवडा.");
-    // optional, but if filled it must be a real description
-    const notes = v.replica_notes.trim();
-    if (notes && notes.length < NOTES_MIN) e.replica_notes = t(`Please write at least ${NOTES_MIN} characters, or leave it blank.`, `किमान ${NOTES_MIN} अक्षरे लिहा, किंवा रिकामे ठेवा.`);
-    else if (notes.length > NOTES_MAX) e.replica_notes = t(`Please keep it within ${NOTES_MAX} characters.`, `कमाल ${NOTES_MAX} अक्षरांत लिहा.`);
+  if (!/^[6-9]\d{9}$/.test(v.phone)) e.phone = t("Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).", "१० अंकी मोबाईल क्रमांक लिहा (६, ७, ८ किंवा ९ ने सुरू होणारा).");
+  if (!v.whatsapp_same && v.whatsapp_number && !/^[6-9]\d{9}$/.test(v.whatsapp_number)) {
+    e.whatsapp_number = t("Enter a valid 10-digit WhatsApp number, or leave it blank.", "१० अंकी WhatsApp क्रमांक लिहा, किंवा रिकामे ठेवा.");
   }
-  if (step === 2 && !v.consent) e.consent = t("You must accept the rules to proceed.", "पुढे जाण्यासाठी नियम मान्य करणे आवश्यक आहे.");
+  // optional (SRS v2.1 REQ-01), but checked when given
+  if (v.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = t("Email address is invalid — correct it or leave it blank.", "ईमेल पत्ता योग्य नाही — दुरुस्त करा किंवा रिकामा ठेवा.");
+  if (!v.district_id) e.district_id = t("Please select your district.", "आपला जिल्हा निवडा.");
+  if (!photo) e.photo = t("Please select a photo of your replica with its builder(s).", "प्रतिकृती व ती घडवणाऱ्यांचा फोटो निवडा.");
+  if (!v.consent) e.consent = t("You must accept the rules to proceed.", "पुढे जाण्यासाठी नियम मान्य करणे आवश्यक आहे.");
   return e;
 }
 
 export function RegistrationForm() {
   const t = useT();
   const { lang } = useLang();
-  const divisions = useApi("/divisions").data?.data ?? [];
+  const { settings } = useSite();
+  // null: the API has the check switched off (automated tests); otherwise { provider, site_key }
+  const captchaConfig = settings.captcha ?? null;
   const districts = useApi("/districts").data?.data ?? [];
-  const talukas = useApi("/talukas").data?.data ?? [];
-  const forts = useApi("/forts").data?.data ?? [];
-  const [step, setStep] = useState(0);
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [photo, setPhoto] = useState(null);
   const [preparing, setPreparing] = useState(false);
   const [progress, setProgress] = useState(null);
   const [formError, setFormError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState(null);
-  const topRef = useRef(null);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [voiceLang, setVoiceLang] = useState(lang === "mr" ? "mr-IN" : "en-IN");
+  const [voiceNote, setVoiceNote] = useState("");
+  const formRef = useRef(null);
   const fileRef = useRef(null);
   const whatsappRef = useRef(null);
+  const captchaRef = useRef(null);
   const photoRef = useRef(photo);
   photoRef.current = photo;
   const submissionId = useRef(newSubmissionId());
 
-  const STEPS = [
-    t("Your Details", "आपली माहिती"),
-    t("Fort & Photo", "दुर्ग व छायाचित्र"),
-    t("Review", "पुनरावलोकन"),
-  ];
-  const type = typeOf(values.participant_type);
-  const guide = type.value === "individual" ? PHOTO_GUIDES.individual : PHOTO_GUIDES.group;
   const whatsapp = whatsappOf(values);
+  const captchaOk = !captchaConfig || Boolean(captchaToken);
+  const busy = progress !== null;
 
   // The preview is revoked when replaced/removed; this frees whatever is left on unmount.
   useEffect(() => () => photoRef.current && URL.revokeObjectURL(photoRef.current.preview), []);
 
+  const setField = (name, value) => {
+    setValues((v) => ({ ...v, [name]: value }));
+    if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
+  };
   const set = (name) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    const clean = name === "phone" || name === "whatsapp_number" ? digitsOnly(value, 10) : name === "members_count" ? digitsOnly(value, 5) : value;
-    setValues((v) => ({ ...v, [name]: clean }));
-    if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
+    setField(name, name === "phone" || name === "whatsapp_number" ? digitsOnly(value, 10) : value);
   };
 
   function setWhatsappSame(e) {
@@ -177,13 +103,9 @@ export function RegistrationForm() {
     if (!same) requestAnimationFrame(() => whatsappRef.current?.focus());
   }
 
-  // A different type is a fresh registration: everything filled so far (photo included) is cleared.
-  function chooseType(value) {
-    if (value === values.participant_type) return;
-    setValues({ ...EMPTY, participant_type: value });
-    setErrors({});
-    setFormError("");
-    replacePhoto(null);
+  function onCaptcha(token) {
+    setCaptchaToken(token);
+    if (token) setErrors((er) => ({ ...er, captcha: undefined }));
   }
 
   function replacePhoto(next) {
@@ -208,42 +130,63 @@ export function RegistrationForm() {
 
   const pickPhoto = () => fileRef.current?.click();
 
-  const focusFirstError = (errs) =>
-    requestAnimationFrame(() => document.querySelector(`[data-field="${Object.keys(errs)[0]}"] input, [data-field="${Object.keys(errs)[0]}"] select, [data-field="${Object.keys(errs)[0]}"] textarea, [data-field="${Object.keys(errs)[0]}"] button`)?.focus());
+  const focusFirstError = (errs) => {
+    const first = FIELD_ORDER.find((f) => errs[f]);
+    requestAnimationFrame(() => {
+      const box = formRef.current?.querySelector(`[data-field="${first}"]`);
+      box?.scrollIntoView({ behavior: "smooth", block: "center" });
+      box?.querySelector("input:not([type=file]), button, iframe")?.focus({ preventScroll: true });
+    });
+  };
 
-  function next() {
-    const errs = validate(step, values, photo, t);
+  // Submit is blocked until "I am not a robot" is ticked (SRS §3); a blocked click explains why, in the page language
+  function onSubmit(e) {
+    e.preventDefault();
+    if (busy || confirming) return;
+    const errs = validate(values, photo, t);
+    if (!captchaOk) errs.captcha = t("Please tick 'I am not a robot' (मी रोबोट नाही) to continue.", "कृपया पुढे पाठवण्यासाठी 'मी रोबोट नाही' (I am not a robot) निवडा.");
     setErrors(errs);
     if (Object.keys(errs).length) return focusFirstError(errs);
-    setStep((s) => s + 1);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setFormError("");
+    setConfirming(true);
   }
 
-  async function submit(e) {
-    e.preventDefault();
-    if (progress !== null) return; // a submit is already in flight (Enter key while uploading)
-    if (step < 2) return next();
-    const errs = validate(2, values, photo, t);
-    setErrors(errs);
-    if (Object.keys(errs).length) return focusFirstError(errs);
+  // Errors the API sends back, put next to their fields in the page language
+  function showServerError(err) {
+    const apiErr = toApiError(err);
+    const next = {};
+    if (apiErr.code === "CAPTCHA_REQUIRED" || apiErr.code === "CAPTCHA_FAILED") {
+      next.captcha = t("The 'I am not a robot' check expired. Please tick it again and submit.", "'मी रोबोट नाही' तपासणीची मुदत संपली. कृपया पुन्हा खूण करून सबमिट करा.");
+    } else if (apiErr.code === "CAPTCHA_UNAVAILABLE") {
+      next.captcha = t("The security check could not be completed. Please try again in a moment.", "सुरक्षा तपासणी पूर्ण होऊ शकली नाही. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.");
+    } else if (apiErr.code === "REGISTRATION_CLOSED") {
+      setFormError(t("Registration is closed right now.", "नोंदणी सध्या बंद आहे."));
+    } else if (apiErr.status === 429) {
+      setFormError(t("Too many registrations from this network. Please try again later.", "या नेटवर्कवरून खूप नोंदणी झाल्या. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा."));
+    } else {
+      const own = validate(values, photo, t);
+      for (const [field, message] of Object.entries(apiErr.details ?? {})) {
+        if (FIELD_ORDER.includes(field) && typeof message === "string") next[field] = own[field] ?? message;
+      }
+      if (!Object.keys(next).length) setFormError(apiErr.message || t("An error occurred during registration.", "नोंदणी करताना अडचण आली."));
+    }
+    setErrors((er) => ({ ...er, ...next }));
+    if (Object.keys(next).length) focusFirstError(next);
+  }
 
+  async function send() {
+    if (busy) return;
     const body = new FormData();
-    body.append("participant_type", values.participant_type);
     body.append("name", values.name.trim());
-    if (type.org && values.organization_name.trim()) body.append("organization_name", values.organization_name.trim());
-    if (type.members) body.append("members_count", values.members_count);
     body.append("phone", values.phone);
     if (whatsapp) body.append("whatsapp_number", whatsapp);
-    body.append("email", values.email.trim());
+    if (values.email.trim()) body.append("email", values.email.trim());
     body.append("country", "India");
     body.append("district_id", values.district_id);
-    if (values.division_id) body.append("division_id", values.division_id);
-    if (values.taluka_id) body.append("taluka_id", values.taluka_id);
-    if (values.fort_id && values.fort_id !== OTHER_FORT) body.append("fort_id", values.fort_id);
-    if (values.replica_notes) body.append("replica_notes", values.replica_notes.trim());
     body.append("consent", "true");
     body.append("website", values.website);
     body.append("submission_id", submissionId.current);
+    if (captchaToken) body.append("captcha_token", captchaToken);
     body.append("photo", photo.file);
 
     setFormError("");
@@ -254,403 +197,297 @@ export function RegistrationForm() {
         onUploadProgress: (p) => p.total && setProgress(Math.round((p.loaded / p.total) * 100)),
       });
       setResult(data.data);
+      setResultOpen(true);
+      setConfirming(false);
     } catch (err) {
-      const apiErr = toApiError(err);
-      const fieldErrors = apiErr.details || {};
-      const errStep = STEP_FIELDS.findIndex((fields) => fields.some((f) => fieldErrors[f]));
-      if (errStep >= 0) {
-        setErrors(Object.fromEntries(Object.entries(fieldErrors).filter(([, m]) => typeof m === "string")));
-        setStep(errStep);
-      }
-      setFormError(apiErr.message || t("An error occurred during registration.", "नोंदणी करताना अडचण आली."));
+      setConfirming(false);
+      showServerError(err);
     } finally {
       setProgress(null);
+      // A token is good for one submit: ask for a fresh tick before the next one
+      captchaRef.current?.reset();
     }
   }
 
-  if (result) return <Success result={result} onReset={() => { submissionId.current = newSubmissionId(); setResult(null); setValues(EMPTY); replacePhoto(null); setStep(0); }} />;
+  function registerAnother() {
+    submissionId.current = newSubmissionId();
+    setValues((v) => ({ ...EMPTY, ...Object.fromEntries(KEEP_FOR_NEXT.map((k) => [k, v[k]])) }));
+    replacePhoto(null);
+    setErrors({});
+    setResult(null);
+    setResultOpen(false);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
-  const filteredDistricts = values.division_id
-    ? districts.filter((d) => String(d.division_id) === String(values.division_id))
-    : [];
-  const filteredTalukas = values.district_id
-    ? talukas.filter((tk) => String(tk.district_id) === String(values.district_id))
-    : [];
+  const district = districts.find((d) => String(d.id) === String(values.district_id));
+  const districtLabel = district ? (lang === "mr" ? district.name_mr : (district.name_en || district.name_mr)) : "";
 
-  const fortName = forts.find((f) => String(f.id) === String(values.fort_id));
-  const fortLabel = fortName ? (lang === "mr" ? fortName.name_mr : (fortName.name_en || fortName.name_mr)) : null;
-  const districtName = districts.find((d) => String(d.id) === String(values.district_id));
-  const districtLabel = districtName ? (lang === "mr" ? districtName.name_mr : (districtName.name_en || districtName.name_mr)) : null;
+  if (result) {
+    return (
+      <>
+        <Success result={result} email={values.email.trim()} onAnother={registerAnother} />
+        <Modal open={resultOpen} onClose={() => setResultOpen(false)} labelledBy="reg-done-title" className="modal--result">
+          <Success result={result} email={values.email.trim()} onAnother={registerAnother} inModal />
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <>
-    <PhotoExamples />
-    <form className="reg-form card-light" onSubmit={submit} noValidate ref={topRef} aria-labelledby="reg-title">
-      <div className="reg-form__head">
-        <h2 id="reg-title">{t(`Durgotsav ${EDITION_YEAR} Registration`, `दुर्गोत्सव ${EDITION_YEAR_MR} नोंदणी`)}</h2>
-        <ol className="stepper" aria-label={t("Registration steps", "नोंदणीचे टप्पे")}>
-          {STEPS.map((label, i) => (
-            <li key={label} className={i === step ? "is-current" : i < step ? "is-done" : ""} aria-current={i === step ? "step" : undefined}>
-              <span className="stepper__dot">{i < step ? <Check size={14} aria-hidden="true" /> : ["1", "2", "3"][i]}</span>
-              <span className="stepper__label">{label}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      {formError && (
-        <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{formError}</span></div>
-      )}
-
-      <input type="text" name="website" value={values.website} onChange={set("website")} tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="reg-form__step"
-        >
-          {step === 0 && (
-            <div className="form-grid form-grid--2">
-              <fieldset className="type-picker span-2" data-field="participant_type" aria-describedby="type-about">
-                <legend className="field__label">
-                  {t("Participating as", "सहभागाचा प्रकार")}
-                  <span className="req" aria-hidden="true">*</span>
-                </legend>
-                <div className="type-picker__options">
-                  {PARTICIPANT_TYPES.map(({ value, Icon, label }) => (
-                    <label key={value} className={`type-option ${values.participant_type === value ? "is-checked" : ""}`}>
-                      <input type="radio" name="participant_type" value={value} checked={values.participant_type === value} onChange={() => chooseType(value)} />
-                      <Icon aria-hidden="true" />
-                      <span>{t(...label)}</span>
-                    </label>
-                  ))}
-                </div>
-                <p className="type-picker__about" id="type-about" aria-live="polite">{t(...type.about)}</p>
-              </fieldset>
-
-              {type.org && (
-                <div className="span-2 field-reveal" key={`org-${type.value}`} data-field="organization_name">
-                  <Field
-                    label={type.orgOptional ? `${t(...type.org)} ${t("(optional)", "(ऐच्छिक)")}` : t(...type.org)}
-                    required={!type.orgOptional}
-                    error={errors.organization_name}
-                  >
-                    {(p) => (
-                      <input {...p} className="input" value={values.organization_name} onChange={set("organization_name")} maxLength={200}
-                        autoComplete={type.value === "family" ? "family-name" : "organization"}
-                        placeholder={type.orgExample ? t(...type.orgExample) : undefined} />
-                    )}
-                  </Field>
-                </div>
-              )}
-              <div className={type.members ? "" : "span-2"} data-field="name">
-                <Field
-                  label={t(...type.name)}
-                  required
-                  error={errors.name}
-                  hint={t("This name will be printed on the certificate.", "अभिनंदन पत्रावर हेच नाव छापले जाईल.")}
-                >
-                  {(p) => <input {...p} className="input" value={values.name} onChange={set("name")} maxLength={150} autoComplete="name" />}
-                </Field>
-              </div>
-              {type.members && (
-                <div className="field-reveal" key={`members-${type.value}`} data-field="members_count">
-                  <Field
-                    label={t(...type.members)}
-                    required
-                    error={errors.members_count}
-                    hint={t("Everyone who helped build the replica, including you.", "प्रतिकृती बनवण्यात सहभागी सर्वजण, आपल्यासह.")}
-                  >
-                    {(p) => (
-                      <input {...p} className="input" type="text" inputMode="numeric" value={values.members_count} onChange={set("members_count")}
-                        placeholder={t(`e.g. ${type.value === "family" ? 4 : 15}`, `उदा. ${type.value === "family" ? "४" : "१५"}`)} autoComplete="off" />
-                    )}
-                  </Field>
-                </div>
-              )}
-              <div data-field="phone">
-                <Field
-                  label={t("Mobile Number", "मोबाईल क्रमांक")}
-                  required
-                  error={errors.phone}
-                >
-                  {(p) => <input {...p} className="input" type="tel" inputMode="numeric" value={values.phone} onChange={set("phone")} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="tel-national" />}
-                </Field>
-                <label className="checkbox whatsapp-same">
-                  <input type="checkbox" checked={values.whatsapp_same} onChange={setWhatsappSame} />
-                  <span>{t("My WhatsApp number is the same as my mobile number", "माझा WhatsApp क्रमांक व मोबाईल क्रमांक एकच आहे")}</span>
-                </label>
-              </div>
-              <div data-field="whatsapp_number">
-                <Field
-                  label={`${t("WhatsApp Number", "WhatsApp क्रमांक")} ${t("(optional)", "(ऐच्छिक)")}`}
-                  error={errors.whatsapp_number}
-                  hint={values.whatsapp_same
-                    ? t("Filled from your mobile number. Untick the box to enter a different one.", "मोबाईल क्रमांकावरून भरला आहे. वेगळा क्रमांक लिहिण्यासाठी खूण काढा.")
-                    : t("Leave blank if you don't use WhatsApp.", "WhatsApp वापरत नसल्यास रिकामे ठेवा.")}
-                >
-                  {(p) => (
-                    <input {...p} ref={whatsappRef} className="input" type="tel" inputMode="numeric" value={whatsapp} onChange={set("whatsapp_number")}
-                      readOnly={values.whatsapp_same} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="off" />
-                  )}
-                </Field>
-              </div>
-              <div data-field="email">
-                <Field
-                  label={t("Email", "ईमेल")}
-                  required
-                  error={errors.email}
-                  hint={t("The certificate will also be emailed to you.", "अभिनंदन पत्र ईमेलवरही पाठवले जाईल.")}
-                >
-                  {(p) => <input {...p} className="input" type="email" inputMode="email" value={values.email} onChange={set("email")} maxLength={160} autoComplete="email" />}
-                </Field>
-              </div>
-              <div data-field="division_id">
-                <Field label={t("Division", "विभाग")} required error={errors.division_id}>
-                  {(p) => (
-                    <CustomSelect
-                      {...p}
-                      value={values.division_id}
-                      placeholder={t("Select Division", "विभाग निवडा")}
-                      options={divisions.map((div) => ({
-                        value: div.id,
-                        label: lang === "mr" ? (div.name_mr || div.name_en) : (div.name_en || div.name_mr),
-                      }))}
-                      onValueChange={(id) => {
-                        setValues((v) => ({ ...v, division_id: id, district_id: "", taluka_id: "" }));
-                        setErrors((er) => ({ ...er, division_id: undefined, district_id: undefined, taluka_id: undefined }));
-                      }}
-                    />
-                  )}
-                </Field>
-              </div>
-              <div data-field="district_id">
-                <Field label={t("District", "जिल्हा")} required error={errors.district_id}>
-                  {(p) => (
-                    <CustomSelect
-                      {...p}
-                      value={values.district_id}
-                      placeholder={t("Select District", "जिल्हा निवडा")}
-                      options={filteredDistricts.map((d) => ({
-                        value: d.id,
-                        label: lang === "mr" ? d.name_mr : (d.name_en || d.name_mr),
-                      }))}
-                      onValueChange={(id) => {
-                        setValues((v) => ({ ...v, district_id: id, taluka_id: "" }));
-                        setErrors((er) => ({ ...er, district_id: undefined, taluka_id: undefined }));
-                      }}
-                      disabled={!values.division_id}
-                    />
-                  )}
-                </Field>
-              </div>
-              <div data-field="taluka_id">
-                <Field label={t("Taluka", "तालुका")} required error={errors.taluka_id}>
-                  {(p) => (
-                    <CustomSelect
-                      {...p}
-                      value={values.taluka_id}
-                      placeholder={t("Select Taluka", "तालुका निवडा")}
-                      options={filteredTalukas.map((tk) => ({
-                        value: tk.id,
-                        label: lang === "mr" ? tk.name_mr : (tk.name_en || tk.name_mr),
-                      }))}
-                      onValueChange={(id) => {
-                        setValues((v) => ({ ...v, taluka_id: id }));
-                        if (errors.taluka_id) setErrors((er) => ({ ...er, taluka_id: undefined }));
-                      }}
-                      disabled={!values.district_id}
-                    />
-                  )}
-                </Field>
-              </div>
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="form-grid">
-              <div data-field="fort_id">
-                <Field
-                  label={t("Which fort's replica did you build?", "आपण कोणत्या दुर्गाची प्रतिकृती बनवली?")}
-                  required
-                  error={errors.fort_id}
-                  hint={t("Select a fort from the UNESCO list, or choose “Other Fort / My Own Design”.", "युनेस्को यादीतील दुर्ग निवडा, किंवा “इतर दुर्ग / माझी कल्पना” निवडा.")}
-                >
-                  {(p) => (
-                    <CustomSelect
-                      {...p}
-                      value={values.fort_id}
-                      placeholder={t("Select a fort", "दुर्ग निवडा")}
-                      options={[
-                        ...forts.map((f) => ({
-                          value: f.id,
-                          label: `${f.name_mr} (${f.name_en})`,
-                        })),
-                        { value: OTHER_FORT, label: t("Other Fort / My Own Design", "इतर दुर्ग / माझी कल्पना") },
-                      ]}
-                      onValueChange={(id) => {
-                        setValues((v) => ({ ...v, fort_id: id }));
-                        if (errors.fort_id) setErrors((er) => ({ ...er, fort_id: undefined }));
-                      }}
-                    />
-                  )}
-                </Field>
-              </div>
-              <div data-field="photo">
-                <section className="photo-guide" aria-labelledby="photo-guide-title">
-                  <header className="photo-guide__head">
-                    <span className="photo-guide__icon"><Camera aria-hidden="true" /></span>
-                    <div>
-                      <h3 id="photo-guide-title">{t("Before you upload your replica photo", "दुर्ग प्रतिकृतीचा फोटो अपलोड करताना घ्यावयाची काळजी")}</h3>
-                      <span className="photo-guide__tag">{t(...guide.title)}</span>
-                    </div>
-                  </header>
-                  <p className="photo-guide__body">{t(...guide.body)}</p>
-                  <FrameShare guide={guide} />
-                  <ul className="photo-guide__rules" id="photo-rules">
-                    <li><Check aria-hidden="true" />{t("Keep the whole replica in the frame, in good light and in focus.", "संपूर्ण प्रतिकृती फ्रेममध्ये, चांगल्या प्रकाशात व स्पष्ट दिसावी.")}</li>
-                    <li><Check aria-hidden="true" />{t("Only a replica you built yourself — no internet, AI-made or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचाच फोटो — इंटरनेटवरील, AI ने बनवलेले किंवा एडिट केलेले फोटो नकोत.")}</li>
-                    <li><Check aria-hidden="true" /><span>{t("One photo · JPG, PNG or WebP · ", "एकच फोटो · JPG, PNG किंवा WebP · ")}<strong>{t(`max ${MAX_UPLOAD_MB} MB`, `कमाल ${MAX_UPLOAD_MB} MB`)}</strong></span></li>
-                  </ul>
-                </section>
-
-                <span className="field__label photo-upload__label" id="photo-label">
-                  {t("Upload photo", "फोटो अपलोड करा")}
-                  <span className="req" aria-hidden="true">*</span>
-                </span>
-                <div
-                  className={`dropzone ${photo ? "has-photo" : ""} ${errors.photo ? "has-error" : ""}`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); addPhoto(e.dataTransfer.files); }}
-                >
-                  {photo ? (
-                    <div className="dropzone__preview">
-                      <img src={photo.preview} alt={t("Selected photo", "निवडलेला फोटो")} />
-                      <div className="dropzone__actions">
-                        <button type="button" className="btn btn--outline btn--sm" onClick={pickPhoto} disabled={preparing}>
-                          {preparing ? <Loader2 className="spin" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />} {t("Change", "बदला")}
-                        </button>
-                        <button type="button" className="btn btn--outline btn--sm" onClick={() => replacePhoto(null)} disabled={preparing}>
-                          <Trash2 aria-hidden="true" /> {t("Remove", "काढा")}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button type="button" className="dropzone__empty" onClick={pickPhoto} disabled={preparing}
-                      aria-describedby="photo-rules" aria-invalid={errors.photo ? true : undefined}>
-                      {preparing ? <Loader2 className="spin" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
-                      <strong>{preparing ? t("Preparing photo…", "फोटो तयार करत आहे…") : t("Select or drag your photo here", "फोटो निवडा किंवा येथे ओढा")}</strong>
-                      <span>{t("You can take a photo directly with your mobile camera.", "मोबाईल कॅमेऱ्याने थेट फोटो काढू शकता.")}</span>
-                    </button>
-                  )}
-                </div>
-                {errors.photo && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors.photo}</span>}
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="sr-only"
-                  aria-labelledby="photo-label"
-                  onChange={(e) => addPhoto(e.target.files)}
-                  tabIndex={-1}
-                />
-              </div>
-              <div data-field="replica_notes">
-                <Field
-                  label={t("Brief description of the replica (optional)", "प्रतिकृतीबद्दल थोडक्यात (ऐच्छिक)")}
-                  error={errors.replica_notes}
-                  hint={<>
-                    {t("Materials used, participating members, etc.", "वापरलेले साहित्य, सहभागी सदस्य इ.")}
-                    <span className="char-count" aria-live="polite">{values.replica_notes.length}/{NOTES_MAX}</span>
-                  </>}
-                >
-                  {(p) => <textarea {...p} className="textarea" value={values.replica_notes} onChange={set("replica_notes")} maxLength={NOTES_MAX} />}
-                </Field>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="stack">
-              <div className="review">
-                <div className="review__photos">
-                  {photo && <img src={photo.preview} alt="" className="review__photo" />}
-                </div>
-                <dl>
-                  <div><dt>{t("Type", "प्रकार")}</dt><dd>{t(...type.label)}</dd></div>
-                  {type.org && values.organization_name.trim() && <div><dt>{t(...type.org)}</dt><dd>{values.organization_name}</dd></div>}
-                  <div><dt>{t("Name", "नाव")}</dt><dd>{values.name}</dd></div>
-                  {type.members && <div><dt>{t("Members", "सदस्य")}</dt><dd>{t(values.members_count, mr(values.members_count))}</dd></div>}
-                  <div><dt>{t("Mobile", "मोबाईल")}</dt><dd>{values.phone}</dd></div>
-                  {whatsapp && <div><dt>WhatsApp</dt><dd>{whatsapp}</dd></div>}
-                  {values.email && <div><dt>{t("Email", "ईमेल")}</dt><dd>{values.email}</dd></div>}
-                  <div><dt>{t("Division", "विभाग")}</dt><dd>{(() => { const div = divisions.find((d) => String(d.id) === String(values.division_id)); return div ? (lang === "mr" ? div.name_mr || div.name_en : div.name_en || div.name_mr) : ""; })()}</dd></div>
-                  <div><dt>{t("District", "जिल्हा")}</dt><dd>{districtLabel}</dd></div>
-                  {values.taluka_id && <div><dt>{t("Taluka", "तालुका")}</dt><dd>{(() => { const tk = talukas.find((t) => String(t.id) === String(values.taluka_id)); return tk ? (lang === "mr" ? tk.name_mr : (tk.name_en || tk.name_mr)) : ""; })()}</dd></div>}
-                  <div><dt>{t("Fort", "दुर्ग")}</dt><dd>{fortLabel || t("Other Fort", "इतर दुर्ग")}</dd></div>
-                </dl>
-              </div>
-              <div data-field="consent">
-                <label className="checkbox">
-                  <input type="checkbox" checked={values.consent} onChange={set("consent")} aria-invalid={errors.consent ? true : undefined} />
-                  <span>
-                    {t(
-                      <>I have read the <Link to="/rules" target="_blank">Durgotsav Code</Link> and <Link to="/terms" target="_blank">Terms</Link>. This replica was built by me / us and the information provided is true. I consent to this photo being displayed in the Durgotsav album after verification.</>,
-                      <>मी <Link to="/rules" target="_blank">दुर्गोत्सव संहिता</Link> व <Link to="/terms" target="_blank">अटी</Link> वाचल्या आहेत. ही प्रतिकृती मी / आम्ही स्वतः तयार केली असून दिलेली माहिती सत्य आहे. पडताळणीनंतर हा फोटो दुर्गोत्सव अल्बममध्ये प्रदर्शित करण्यास माझी संमती आहे.</>
-                    )}
-                  </span>
-                </label>
-                {errors.consent && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors.consent}</span>}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {progress !== null && (
-        <div className="upload-progress" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label={t("Upload progress", "अपलोड प्रगती")}>
-          <span style={{ width: `${progress}%` }} />
+      <PhotoExamples />
+      <form className="reg-form card-light" onSubmit={onSubmit} noValidate ref={formRef} aria-labelledby="reg-title">
+        <div className="reg-form__head">
+          <h2 id="reg-title">{t(`Durgotsav ${EDITION_YEAR} Registration`, `दुर्गोत्सव ${EDITION_YEAR_MR} नोंदणी`)}</h2>
+          <p className="muted reg-form__lead">
+            {t(
+              "Fill in this one page and submit. Once AMRUT has checked your photo and details, your certificate is ready to download and its link comes by SMS. One mobile number can be used for any number of registrations.",
+              "हे एकच पान भरून सबमिट करा. अमृत संस्थेकडून छायाचित्र व माहितीची पडताळणी झाल्यावर आपले अभिनंदन पत्र डाउनलोड करता येईल आणि त्याची लिंक SMS ने मिळेल. एका मोबाईल क्रमांकावरून कितीही नोंदणी करता येतात.",
+            )}
+          </p>
+          <VoiceLanguage value={voiceLang} onChange={setVoiceLang} />
+          {voiceNote && <p className="voice-lang__note" role="status">{voiceNote}</p>}
         </div>
-      )}
 
-      <div className="reg-form__actions">
-        {step > 0 ? (
-          <button type="button" className="btn btn--outline" onClick={() => setStep((s) => s - 1)} disabled={progress !== null}>
-            <ArrowLeft aria-hidden="true" /> {t("Back", "मागे")}
-          </button>
-        ) : <span />}
-        {step < 2 ? (
-          <button type="submit" className="btn btn--primary" disabled={preparing}>
-            {t("Next", "पुढे")} <ArrowRight aria-hidden="true" />
-          </button>
-        ) : (
-          <button type="submit" className="btn btn--primary" disabled={progress !== null}>
-            {progress !== null
-              ? <><Loader2 className="spin" aria-hidden="true" /> {progress < 100
-                ? t(`Uploading ${progress}%`, `अपलोड ${progress}%`)
-                : t("Saving your photo…", "फोटो जतन करत आहे…")}</>
-              : <>{t("Complete Registration", "नोंदणी पूर्ण करा")} <Check aria-hidden="true" /></>}
-          </button>
+        {formError && (
+          <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{formError}</span></div>
         )}
-      </div>
-    </form>
+
+        <input type="text" name="website" value={values.website} onChange={set("website")} tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
+
+        <div className="form-grid form-grid--2">
+          <div className="span-2" data-field="name">
+            <Field
+              label={t("Full Name / Organisation / Family / Society", "पूर्ण नाव / संस्था / कुटुंब / सोसायटी")}
+              required
+              error={errors.name}
+              hint={t("This name will be printed on the certificate exactly as written here.", "अभिनंदन पत्रावर हेच नाव जसेच्या तसे छापले जाईल.")}
+            >
+              {(p) => (
+                <div className="input-voice">
+                  <input {...p} className="input" value={values.name} onChange={set("name")} maxLength={NAME_MAX} autoComplete="name"
+                    placeholder={t("e.g. Rahul Patil / Patil Family / Shivneri Housing Society", "उदा. राहुल पाटील / पाटील परिवार / शिवनेरी गृहनिर्माण संस्था")} />
+                  <VoiceButton
+                    lang={voiceLang}
+                    label={t("Speak the name", "नाव बोलून भरा")}
+                    onError={setVoiceNote}
+                    onText={(text) => {
+                      setVoiceNote("");
+                      setField("name", `${values.name.trim()} ${text}`.trim().slice(0, NAME_MAX));
+                    }}
+                  />
+                </div>
+              )}
+            </Field>
+          </div>
+
+          <div data-field="phone">
+            <Field label={t("Mobile Number", "मोबाईल क्रमांक")} required error={errors.phone}
+              hint={t("The certificate link is sent here by SMS.", "अभिनंदन पत्राची लिंक या क्रमांकावर SMS ने पाठवली जाईल.")}>
+              {(p) => (
+                <div className="input-voice">
+                  <input {...p} className="input" type="tel" inputMode="numeric" value={values.phone} onChange={set("phone")} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="tel-national" />
+                  <VoiceButton
+                    lang={voiceLang}
+                    label={t("Speak the mobile number", "मोबाईल क्रमांक बोलून भरा")}
+                    onError={setVoiceNote}
+                    onText={(text) => {
+                      setVoiceNote("");
+                      setField("phone", digitsOnly(spokenDigits(text), 10));
+                    }}
+                  />
+                </div>
+              )}
+            </Field>
+            <label className="checkbox whatsapp-same">
+              <input type="checkbox" checked={values.whatsapp_same} onChange={setWhatsappSame} />
+              <span>{t("My WhatsApp number is the same as my mobile number", "माझा WhatsApp क्रमांक व मोबाईल क्रमांक एकच आहे")}</span>
+            </label>
+          </div>
+          <div data-field="whatsapp_number">
+            <Field
+              label={`${t("WhatsApp Number", "WhatsApp क्रमांक")} ${t("(optional)", "(ऐच्छिक)")}`}
+              error={errors.whatsapp_number}
+              hint={values.whatsapp_same
+                ? t("Filled from your mobile number. Untick the box to enter a different one.", "मोबाईल क्रमांकावरून भरला आहे. वेगळा क्रमांक लिहिण्यासाठी खूण काढा.")
+                : t("Leave blank if you don't use WhatsApp.", "WhatsApp वापरत नसल्यास रिकामे ठेवा.")}
+            >
+              {(p) => (
+                <input {...p} ref={whatsappRef} className="input" type="tel" inputMode="numeric" value={whatsapp} onChange={set("whatsapp_number")}
+                  readOnly={values.whatsapp_same} placeholder={t("10-digit number", "१० अंकी क्रमांक")} autoComplete="off" />
+              )}
+            </Field>
+          </div>
+
+          <div data-field="email">
+            <Field
+              label={`${t("Email", "ईमेल")} ${t("(optional)", "(ऐच्छिक)")}`}
+              error={errors.email}
+              hint={t("If given, the certificate is also emailed to you.", "ईमेल दिल्यास अभिनंदन पत्र ईमेलवरही पाठवले जाईल.")}
+            >
+              {(p) => <input {...p} className="input" type="email" inputMode="email" value={values.email} onChange={set("email")} maxLength={160} autoComplete="email" placeholder="name@example.com" />}
+            </Field>
+          </div>
+          <div data-field="district_id">
+            <Field label={t("District", "जिल्हा")} required error={errors.district_id}>
+              {(p) => (
+                <CustomSelect
+                  {...p}
+                  value={values.district_id}
+                  placeholder={t("Select District", "जिल्हा निवडा")}
+                  options={districts.map((d) => ({ value: d.id, label: lang === "mr" ? d.name_mr : (d.name_en || d.name_mr) }))}
+                  onValueChange={(id) => setField("district_id", id)}
+                />
+              )}
+            </Field>
+          </div>
+
+          <div className="span-2" data-field="photo">
+            <section className="photo-guide" aria-labelledby="photo-guide-title">
+              <header className="photo-guide__head">
+                <span className="photo-guide__icon"><Camera aria-hidden="true" /></span>
+                <div>
+                  <h3 id="photo-guide-title">{t("Before you upload your replica photo", "दुर्ग प्रतिकृतीचा फोटो अपलोड करताना घ्यावयाची काळजी")}</h3>
+                  <span className="photo-guide__tag">{t("About 75% fort replica · 25% you / your team", "सुमारे ७५% दुर्ग प्रतिकृती · २५% आपण / आपली टीम")}</span>
+                </div>
+              </header>
+              <FrameShare guide={PHOTO_RULE} />
+              <ul className="photo-guide__rules" id="photo-rules">
+                <li><Check aria-hidden="true" />{t("The replica fills most of the frame; you or your team stand beside it (a selfie works).", "फोटोचा बहुतांश भाग प्रतिकृतीने व्यापलेला असावा; आपण किंवा आपली टीम बाजूला उभे असावे (सेल्फीही चालेल).")}</li>
+                <li><Check aria-hidden="true" />{t("Keep the whole replica in the frame, in good light and in focus.", "संपूर्ण प्रतिकृती फ्रेममध्ये, चांगल्या प्रकाशात व स्पष्ट दिसावी.")}</li>
+                <li><Check aria-hidden="true" />{t("Only a replica you built yourself — no internet, AI-made or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचाच फोटो — इंटरनेटवरील, AI ने बनवलेले किंवा एडिट केलेले फोटो नकोत.")}</li>
+                <li><Check aria-hidden="true" /><span>{t("One photo · JPG, PNG or WebP · ", "एकच फोटो · JPG, PNG किंवा WebP · ")}<strong>{t(`max ${MAX_UPLOAD_MB} MB`, `कमाल ${MAX_UPLOAD_MB} MB`)}</strong></span></li>
+              </ul>
+            </section>
+
+            <span className="field__label photo-upload__label" id="photo-label">
+              {t("Upload photo", "फोटो अपलोड करा")}
+              <span className="req" aria-hidden="true">*</span>
+            </span>
+            <div
+              className={`dropzone ${photo ? "has-photo" : ""} ${errors.photo ? "has-error" : ""}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); addPhoto(e.dataTransfer.files); }}
+            >
+              {photo ? (
+                <div className="dropzone__preview">
+                  <img src={photo.preview} alt={t("Selected photo", "निवडलेला फोटो")} />
+                  <div className="dropzone__actions">
+                    <button type="button" className="btn btn--outline btn--sm" onClick={pickPhoto} disabled={preparing}>
+                      {preparing ? <Loader2 className="spin" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />} {t("Change", "बदला")}
+                    </button>
+                    <button type="button" className="btn btn--outline btn--sm" onClick={() => replacePhoto(null)} disabled={preparing}>
+                      <Trash2 aria-hidden="true" /> {t("Remove", "काढा")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="dropzone__empty" onClick={pickPhoto} disabled={preparing}
+                  aria-describedby="photo-rules" aria-invalid={errors.photo ? true : undefined}>
+                  {preparing ? <Loader2 className="spin" aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
+                  <strong>{preparing ? t("Preparing photo…", "फोटो तयार करत आहे…") : t("Select or drag your photo here", "फोटो निवडा किंवा येथे ओढा")}</strong>
+                  <span>{t("You can take a photo directly with your mobile camera.", "मोबाईल कॅमेऱ्याने थेट फोटो काढू शकता.")}</span>
+                </button>
+              )}
+            </div>
+            {errors.photo && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors.photo}</span>}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              aria-labelledby="photo-label"
+              onChange={(e) => addPhoto(e.target.files)}
+              tabIndex={-1}
+            />
+          </div>
+
+          <div className="span-2" data-field="consent">
+            <label className="checkbox">
+              <input type="checkbox" checked={values.consent} onChange={set("consent")} aria-invalid={errors.consent ? true : undefined} />
+              <span>
+                {t(
+                  <>I have read the <Link to="/rules" target="_blank">Durgotsav Code</Link> and <Link to="/terms" target="_blank">Terms</Link>. This replica was built by me / us and the information provided is true. I consent to this photo being displayed in the Durgotsav album after verification.</>,
+                  <>मी <Link to="/rules" target="_blank">दुर्गोत्सव संहिता</Link> व <Link to="/terms" target="_blank">अटी</Link> वाचल्या आहेत. ही प्रतिकृती मी / आम्ही स्वतः तयार केली असून दिलेली माहिती सत्य आहे. पडताळणीनंतर हा फोटो दुर्गोत्सव अल्बममध्ये प्रदर्शित करण्यास माझी संमती आहे.</>
+                )}
+              </span>
+            </label>
+            {errors.consent && <span className="field__error"><AlertCircle size={14} aria-hidden="true" />{errors.consent}</span>}
+          </div>
+        </div>
+
+        {/* SRS §3: immediately above Submit */}
+        <div className="reg-form__submit">
+          <Captcha ref={captchaRef} config={captchaConfig} onChange={onCaptcha} invalid={Boolean(errors.captcha)} />
+          {errors.captcha && (
+            <div className="alert alert--error" role="alert" id="captcha-required"><AlertCircle aria-hidden="true" /><span>{errors.captcha}</span></div>
+          )}
+          <button
+            type="submit"
+            className={`btn btn--primary btn--lg reg-submit ${captchaOk ? "" : "is-blocked"}`}
+            disabled={preparing || busy}
+            aria-describedby={captchaOk ? undefined : "captcha-hint"}
+          >
+            <Send aria-hidden="true" /> {t("Submit", "सबमिट करा")}
+          </button>
+          {!captchaOk && (
+            <span className="field__hint" id="captcha-hint">
+              {t("Tick “I am not a robot” above to enable Submit.", "सबमिट करण्यासाठी वरील “मी रोबोट नाही” वर खूण करा.")}
+            </span>
+          )}
+        </div>
+      </form>
+
+      <Modal open={confirming} onClose={() => setConfirming(false)} labelledBy="confirm-title" dismissable={!busy} className="modal--confirm">
+        <h2 id="confirm-title" className="modal__title">{t("Is the name correct? Please check", "नाव बरोबर आहे का ते तपासा")}</h2>
+        <p className="modal__lead">{t("Check all the details once more — after verification the certificate is made from them.", "कृपया सर्व माहिती तपासा — पडताळणीनंतर याच माहितीवरून आपले अभिनंदन पत्र तयार होईल.")}</p>
+        <div className="confirm-name">
+          <span>{t("Name printed on the certificate", "अभिनंदन पत्रावर छापले जाणारे नाव")}</span>
+          <strong>{values.name.trim()}</strong>
+        </div>
+        <div className="review">
+          <div className="review__photos">{photo && <img src={photo.preview} alt="" className="review__photo" />}</div>
+          <dl>
+            <div><dt>{t("Mobile", "मोबाईल")}</dt><dd>{values.phone}</dd></div>
+            {whatsapp && <div><dt>WhatsApp</dt><dd>{whatsapp}</dd></div>}
+            <div><dt>{t("Email", "ईमेल")}</dt><dd>{values.email.trim() || "—"}</dd></div>
+            <div><dt>{t("District", "जिल्हा")}</dt><dd>{districtLabel}</dd></div>
+          </dl>
+        </div>
+        {busy && (
+          <div className="stack" style={{ gap: 6 }}>
+            <div className="upload-progress" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label={t("Upload progress", "अपलोड प्रगती")}>
+              <span style={{ width: `${progress}%` }} />
+            </div>
+            <span className="field__hint" aria-live="polite">
+              {progress < 100 ? t(`Uploading ${progress}%`, `अपलोड ${mr(progress)}%`) : t("Saving your registration…", "आपली नोंदणी जतन करत आहे…")}
+            </span>
+          </div>
+        )}
+        <div className="modal__actions">
+          <button type="button" className="btn btn--outline" onClick={() => setConfirming(false)} disabled={busy}>
+            <Pencil aria-hidden="true" /> {t("Edit details", "माहिती दुरुस्त करा")}
+          </button>
+          <button type="button" className="btn btn--primary" onClick={send} disabled={busy} autoFocus>
+            {busy ? <Loader2 className="spin" aria-hidden="true" /> : <Check aria-hidden="true" />} {t("Yes, all correct — Submit", "होय, माहिती बरोबर आहे — सबमिट करा")}
+          </button>
+        </div>
+      </Modal>
     </>
   );
 }
 
-function Success({ result, onReset }) {
+// After a successful submit: shown in the pop-up (inModal) and, once that is closed, on the page. The certificate is
+// not there yet — it is generated when an admin approves the registration; the status link follows it.
+function Success({ result, email, onAnother, inModal = false }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const cardRef = useRef(null);
   // The card replaces the much taller form, so the old scroll position would land below it — bring it into view once mounted.
   // Braces matter: newer browsers return a Promise from scrollIntoView, and React would call it as the effect's cleanup and crash.
   useEffect(() => {
-    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    if (!inModal) cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [inModal]);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(result.registration_no);
@@ -660,33 +497,51 @@ function Success({ result, onReset }) {
       /* clipboard blocked — number is visible anyway */
     }
   };
+  const Title = inModal ? "h2" : "h3";
   return (
-    <motion.div ref={cardRef} className="reg-success card-light" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} role="status" aria-live="polite">
-      <motion.span className="reg-success__icon" initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.15 }}>
-        <CheckCircle2 aria-hidden="true" />
-      </motion.span>
-      <h2>{t("Registration Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी यशस्वी! जय भवानी, जय शिवाजी!")}</h2>
-      <p>{t(`Thank you for participating in Durgotsav ${EDITION_YEAR}. Your registration number:`, `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल धन्यवाद. आपला नोंदणी क्रमांक:`)}</p>
-      <div className="reg-success__number">
-        <strong>{result.registration_no}</strong>
-        <button type="button" className="btn btn--outline btn--sm" onClick={copy}>
-          <Copy aria-hidden="true" /> {copied ? t("Copied", "कॉपी झाले") : t("Copy", "कॉपी करा")}
-        </button>
-      </div>
-      <p className="muted">
+    <div ref={cardRef} className={inModal ? "reg-success reg-success--modal" : "reg-success card-light"} role={inModal ? undefined : "status"}>
+      <span className="reg-success__icon"><CheckCircle2 aria-hidden="true" /></span>
+      <Title id={inModal ? "reg-done-title" : undefined}>{t("Registration Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी यशस्वी! जय भवानी, जय शिवाजी!")}</Title>
+      <p>
         {t(
-          "Please keep this number safe. Once verification is complete (usually within 24 hours), you can download your certificate using your registration number and mobile number.",
-          "कृपया हा क्रमांक जपून ठेवा. पडताळणी पूर्ण झाल्यावर (शक्यतो २४ तासांत) नोंदणी क्रमांक व मोबाईल क्रमांक वापरून अभिनंदन पत्र डाउनलोड करता येईल."
+          `Thank you for taking part in Durgotsav ${EDITION_YEAR}. AMRUT will now check your photo and details; once verified, your certificate will be ready to download.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल धन्यवाद. अमृत संस्था आता आपले छायाचित्र व माहितीची पडताळणी करेल; पडताळणी पूर्ण झाल्यावर आपले अभिनंदन पत्र डाउनलोड करता येईल.`,
         )}
       </p>
+      <dl className="cert-facts">
+        <div>
+          <dt>{t("Registration number", "नोंदणी क्रमांक")}</dt>
+          <dd>
+            {result.registration_no}
+            <button type="button" className="copy-btn" onClick={copy} aria-label={copied ? t("Copied", "कॉपी झाले") : t("Copy registration number", "नोंदणी क्रमांक कॉपी करा")}>
+              {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+            </button>
+          </dd>
+        </div>
+        <div>
+          <dt>{t("Status", "स्थिती")}</dt>
+          <dd className="cert-facts__status"><Clock size={16} aria-hidden="true" /> {t("Verification pending", "पडताळणी प्रलंबित")}</dd>
+        </div>
+      </dl>
+      <p className="muted reg-success__note">
+        <Smartphone size={16} aria-hidden="true" />
+        <span>
+          {email
+            ? t("A confirmation with your status link has been sent to your mobile by SMS. After verification you will get the certificate link by SMS and the certificate by email.", "नोंदणीची स्थिती पाहण्याची लिंक आपल्या मोबाईलवर SMS ने पाठवली आहे. पडताळणीनंतर अभिनंदन पत्राची लिंक SMS ने आणि अभिनंदन पत्र ईमेलवर मिळेल.")
+            : t("A confirmation with your status link has been sent to your mobile by SMS. After verification you will get the certificate link by SMS.", "नोंदणीची स्थिती पाहण्याची लिंक आपल्या मोबाईलवर SMS ने पाठवली आहे. पडताळणीनंतर अभिनंदन पत्राची लिंक SMS ने मिळेल.")}
+        </span>
+      </p>
       <div className="cluster" style={{ justifyContent: "center" }}>
-        <Link to={`/certificate?registration=${encodeURIComponent(result.registration_no)}&tab=status`} className="btn btn--primary">
-          {t("View Registration Status", "नोंदणी स्थिती पहा")}
+        <Link to={`/c/${result.token}`} className="btn btn--primary">
+          <Clock aria-hidden="true" /> {t("View registration status", "नोंदणीची स्थिती पाहा")}
         </Link>
-        <button type="button" className="btn btn--outline" onClick={onReset}>
-          {t("Register Another", "आणखी एक नोंदणी")}
+        <button type="button" className="btn btn--outline" onClick={onAnother}>
+          {t("Register Another", "आणखी एक नोंदणी करा")}
         </button>
+        <Link to="/certificate" className="btn btn--outline">
+          {t("All my registrations", "माझ्या सर्व नोंदणी")}
+        </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }

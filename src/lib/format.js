@@ -59,6 +59,7 @@ export const PARTICIPANT_TYPES_EN = {
   college: "College",
 };
 
+// pending: registered, waiting for AMRUT to check the photo and details; the certificate comes with the approval
 export const STATUS = {
   pending:        { label: "पडताळणी प्रलंबित",      tone: "warning" },
   info_requested: { label: "अतिरिक्त माहिती आवश्यक", tone: "warning" },

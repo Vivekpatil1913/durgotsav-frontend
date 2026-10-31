@@ -222,7 +222,7 @@ export function StatsBand({ stats }) {
   const items = live
     ? [
         [stats.participants, t("Durgotsav Registrations", "दुर्गवीरांची नोंदणी")],
-        [stats.verified,     t("Certificates Issued", "अभिनंदन पत्रे प्रदान")],
+        [stats.certificates ?? stats.verified, t("Certificates Issued", "अभिनंदन पत्रे प्रदान")],
         [stats.districts,    t("Districts Participating", "जिल्ह्यांतून सहभाग")],
         [stats.forts,        t("UNESCO World Heritage Forts", "युनेस्को जागतिक वारसा दुर्ग")],
       ]
@@ -259,9 +259,9 @@ export function Journey() {
     [Camera, t("Take a Photo", "छायाचित्र काढा"),
       t("Take a photo (Selfie/Photograph) where both you and your fort replica are clearly visible.", "आपण व आपली प्रतिकृती स्पष्ट दिसतील असे स्वतःचे छायाचित्र (Selfie/Photograph) काढा.")],
     [Upload, t("Register & Upload", "नोंदणी व अपलोड"),
-      t("Fill the registration form on the website and upload your photo. You will receive a registration number.", "संकेतस्थळावर नोंदणी अर्ज भरा आणि छायाचित्र अपलोड करा. आपल्याला नोंदणी क्रमांक मिळेल.")],
+      t("Fill the one-page registration form on the website and upload your photo. You will receive a registration number.", "संकेतस्थळावरील एक पानी नोंदणी अर्ज भरा आणि छायाचित्र अपलोड करा. आपल्याला नोंदणी क्रमांक मिळेल.")],
     [Award,  t("Get the Certificate", "अभिनंदन पत्र मिळवा"),
-      t("After verification, download the digital congratulation letter with the signatures of dignitaries.", "पडताळणी पूर्ण झाल्यावर मान्यवरांच्या स्वाक्षरीचे डिजिटल अभिनंदन पत्र डाउनलोड करा.")],
+      t("After verification, download the digital congratulation letter with the signatures of dignitaries — the link also comes by SMS.", "पडताळणी पूर्ण झाल्यावर मान्यवरांच्या स्वाक्षरीचे डिजिटल अभिनंदन पत्र डाउनलोड करा — त्याची लिंक SMS नेही मिळेल.")],
   ];
 
   const stepNums = lang === "mr"

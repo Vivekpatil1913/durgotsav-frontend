@@ -66,7 +66,7 @@ export default function Participate() {
     [Leaf,        t("Eco-friendly materials", "पर्यावरणपूरक साहित्य"),
       t("Prefer safe and eco-friendly materials such as clay, stone, bricks, and paper.", "माती, दगड, विटा, कागद असे सुरक्षित व पर्यावरणपूरक साहित्य वापरण्यास प्राधान्य द्या.")],
     [Camera,      t("Clear photo", "स्पष्ट छायाचित्र"),
-      t("One clear photo where your replica stands out — about 70% replica and 30% you or your team.", "प्रतिकृती ठळकपणे दिसेल असा एक स्पष्ट फोटो — सुमारे ७०% प्रतिकृती व ३०% आपण किंवा आपली टीम.")],
+      t("One clear photo where your replica stands out — about 75% replica and 25% you or your team.", "प्रतिकृती ठळकपणे दिसेल असा एक स्पष्ट फोटो — सुमारे ७५% प्रतिकृती व २५% आपण किंवा आपली टीम.")],
     [ShieldAlert, t("Public safety", "सार्वजनिक सुरक्षितता"),
       t("Take care not to block roads, pedestrian paths, or fire safety routes.", "रस्ते, पादचारी मार्ग, अग्निसुरक्षा मार्ग यांना अडथळा होणार नाही याची दक्षता घ्या.")],
   ];
@@ -84,8 +84,8 @@ export default function Participate() {
         eyebrow={t("Participation", "सहभाग")}
         title={t("Your Fort, Your Tribute", "आपला दुर्ग, आपली मानवंदना")}
         lead={t(
-          "Registration can only be done through this official website. One person/family should register once per replica.",
-          "नोंदणी फक्त या अधिकृत संकेतस्थळावरून करता येते. एका व्यक्तीने/कुटुंबाने एका प्रतिकृतीच्या आधारे एक नोंदणी करावी."
+          "Registration can only be done through this official website. Register once per replica — one mobile number can be used for any number of registrations. The certificate is ready once AMRUT has verified the photo and details.",
+          "नोंदणी फक्त या अधिकृत संकेतस्थळावरून करता येते. एका प्रतिकृतीसाठी एक नोंदणी करावी — एका मोबाईल क्रमांकावरून कितीही नोंदणी करता येतात. छायाचित्र व माहितीची पडताळणी झाल्यावर अभिनंदन पत्र मिळते."
         )}
       />
       <Journey />

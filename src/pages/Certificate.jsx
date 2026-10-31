@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-import { AlertCircle, BadgeCheck, CheckCircle2, Clock, Download, ImagePlus, Loader2, Search, ShieldCheck, XCircle } from "lucide-react";
+import { AlertCircle, BadgeCheck, CheckCircle2, ChevronLeft, ChevronRight, Clock, Files, ImagePlus, Loader2, Search, ShieldCheck, Smartphone, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { CertificateButtons, certificateError } from "../components/certificate/CertificateButtons.jsx";
+import { Captcha } from "../components/participate/Captcha.jsx";
 import { digitsOnly, Field } from "../components/participate/fields.jsx";
 import "../components/participate/registration.css";
 import { StatsBand } from "../components/home/HomeSections.jsx";
@@ -9,22 +11,235 @@ import { Seo } from "../components/seo/Seo.jsx";
 import { PageHero } from "../components/ui/PageParts.jsx";
 import { EDITION_YEAR, EDITION_YEAR_MR, NUMBER_PREFIX } from "../config/edition.js";
 import { useLang, useT } from "../context/LanguageContext.jsx";
+import { useSite } from "../context/SiteContext.jsx";
 import { http, toApiError } from "../lib/api.js";
-import { assetUrl, enDate, mrDate, STATUS, STATUS_EN } from "../lib/format.js";
+import { downloadAllCertificates } from "../lib/download.js";
+import { assetUrl, enDate, mr, mrDate, STATUS, STATUS_EN } from "../lib/format.js";
 import { preparePhoto } from "../lib/image.js";
 import "./pages.css";
 
+// "download" keeps its key (older links say ?tab=download); it now looks certificates up by mobile number (SRS v2.1 §5)
 const TABS_DEF = [
-  ["download", { en: "Download Certificate",      mr: "अभिनंदन पत्र डाउनलोड" },     Download    ],
+  ["download", { en: "My Registrations",           mr: "माझ्या नोंदणी" },              Smartphone  ],
   ["status",   { en: "Registration Status",        mr: "नोंदणी स्थिती" },             Clock       ],
   ["verify",   { en: "Verify Certificate",         mr: "अभिनंदन पत्र पडताळणी" },     ShieldCheck ],
 ];
 
 const ERRORS = {
   404: { en: "No registration found for this registration number and mobile number. Please check the details.", mr: "या नोंदणी क्रमांक व मोबाईल क्रमांकासाठी नोंदणी सापडली नाही. कृपया तपशील तपासा." },
-  409: { en: "Your registration verification is not yet complete. The certificate will be available once verification is done.", mr: "आपल्या नोंदणीची पडताळणी अद्याप पूर्ण झालेली नाही. पडताळणी पूर्ण झाल्यावर अभिनंदन पत्र उपलब्ध होईल." },
+  409: { en: "This certificate is not available right now. Check the registration status for the reason.", mr: "हे अभिनंदन पत्र सध्या उपलब्ध नाही. कारणासाठी नोंदणीची स्थिती पाहा." },
   429: { en: "Too many attempts. Please try again in a few minutes.", mr: "खूप वेळा प्रयत्न झाले. कृपया काही मिनिटांनी पुन्हा प्रयत्न करा." },
 };
+
+const MOBILE_ERROR = ["Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.", "कृपया ६, ७, ८ किंवा ९ ने सुरू होणारा वैध १० अंकी मोबाईल क्रमांक लिहा."];
+const CAPTCHA_PROMPT = ["Please tick 'I am not a robot' (मी रोबोट नाही) to continue.", "कृपया पुढे पाठवण्यासाठी 'मी रोबोट नाही' (I am not a robot) निवडा."];
+
+// ---------------------------------------------------------------- my registrations (by mobile number)
+
+/**
+ * Every registration of one mobile number — any number of them — newest first, PAGE_SIZE at a time. The first page
+ * needs the CAPTCHA; it returns a lookup token that fetches the following pages (30 minutes) without a new tick.
+ * pages: the pages seen so far, [{ data, next_before }]; Previous shows them again without asking the server.
+ */
+function MyCertificatesTab() {
+  const t = useT();
+  const { lang } = useLang();
+  const { settings } = useSite();
+  const captchaConfig = settings.captcha ?? null;
+  const [phone, setPhone] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
+  const [session, setSession] = useState(null); // { lookupToken, total, pageSize }
+  const [pages, setPages] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [allBusy, setAllBusy] = useState(false);
+  const [allError, setAllError] = useState("");
+  const captchaRef = useRef(null);
+  const listRef = useRef(null);
+  const fmtDate = (v) => (lang === "mr" ? mrDate(v) : enDate(v));
+  const num = (n) => (lang === "mr" ? mr(n) : String(n));
+  const expired = t("This search has expired. Please search again.", "ही शोध मुदत संपली. कृपया पुन्हा शोधा.");
+
+  async function search(e) {
+    e.preventDefault();
+    const next = {};
+    if (!/^[6-9]\d{9}$/.test(phone)) next.phone = t(...MOBILE_ERROR);
+    if (captchaConfig && !captchaToken) next.captcha = t(...CAPTCHA_PROMPT);
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    setBusy(true);
+    setError("");
+    setAllError("");
+    try {
+      const { data } = await http.post("/certificates/lookup", { phone, captcha_token: captchaToken ?? undefined });
+      setSession({ lookupToken: data.meta.lookup_token, total: data.meta.total, pageSize: data.meta.page_size });
+      setPages([{ data: data.data, next_before: data.meta.next_before }]);
+      setPageIndex(0);
+    } catch (err) {
+      const apiErr = toApiError(err);
+      if (apiErr.code?.startsWith("CAPTCHA")) setErrors({ captcha: t("The 'I am not a robot' check expired. Please tick it again.", "'मी रोबोट नाही' तपासणीची मुदत संपली. कृपया पुन्हा खूण करा.") });
+      else setError(ERRORS[apiErr.status]?.[lang] ?? apiErr.message);
+      setSession(null);
+      setPages([]);
+    } finally {
+      setBusy(false);
+      captchaRef.current?.reset();
+    }
+  }
+
+  const showPage = (index) => {
+    setPageIndex(index);
+    setAllError("");
+    requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+
+  async function nextPage() {
+    if (pageIndex + 1 < pages.length) return showPage(pageIndex + 1);
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await http.get("/certificates/lookup", { params: { lookup_token: session.lookupToken, before: pages[pageIndex].next_before } });
+      setPages((p) => [...p, { data: data.data, next_before: data.meta.next_before }]);
+      showPage(pageIndex + 1);
+    } catch (err) {
+      const apiErr = toApiError(err);
+      setError(apiErr.code === "LOOKUP_EXPIRED" || apiErr.status === 400 ? expired : ERRORS[apiErr.status]?.[lang] ?? apiErr.message);
+      if (apiErr.code === "LOOKUP_EXPIRED") {
+        setSession(null);
+        setPages([]);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const page = pages[pageIndex];
+  const list = page?.data ?? null;
+  const pageCount = session ? Math.max(1, Math.ceil(session.total / (session.pageSize || 20))) : 0;
+  const available = list?.filter((r) => r.certificate_available) ?? [];
+
+  async function downloadAll() {
+    setAllBusy(true);
+    setAllError("");
+    try {
+      await downloadAllCertificates(available.map((r) => r.token));
+    } catch (err) {
+      setAllError(certificateError(err, t));
+    } finally {
+      setAllBusy(false);
+    }
+  }
+
+  return (
+    <div className="stack">
+      <p className="muted">
+        {t(
+          "Enter the mobile number you registered with. Every registration on that number is listed with its status; approved ones can be downloaded as a PDF or image, or all of a page at once.",
+          "नोंदणी करताना दिलेला मोबाईल क्रमांक लिहा. त्या क्रमांकावरील सर्व नोंदणी स्थितीसह येथे दिसतील; पडताळणी पूर्ण झालेली अभिनंदन पत्रे PDF किंवा प्रतिमा म्हणून, किंवा एका पानावरील सर्व एकत्र डाउनलोड करा.",
+        )}
+      </p>
+      <form className="stack" onSubmit={search} noValidate>
+        <Field label={t("Registered Mobile Number", "नोंदणीकृत मोबाईल क्रमांक")} required error={errors.phone}>
+          {(p) => (
+            <input {...p} className="input" type="tel" inputMode="numeric" value={phone} autoComplete="tel-national"
+              placeholder={t("10-digit number", "१० अंकी क्रमांक")}
+              onChange={(e) => { setPhone(digitsOnly(e.target.value, 10)); setErrors((er) => ({ ...er, phone: undefined })); }} />
+          )}
+        </Field>
+        <Captcha ref={captchaRef} config={captchaConfig} invalid={Boolean(errors.captcha)}
+          onChange={(token) => { setCaptchaToken(token); if (token) setErrors((er) => ({ ...er, captcha: undefined })); }} />
+        {errors.captcha && <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{errors.captcha}</span></div>}
+        {error && <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{error}</span></div>}
+        <div>
+          <button type="submit" className={`btn btn--primary ${captchaConfig && !captchaToken ? "reg-submit is-blocked" : ""}`} disabled={busy}>
+            {busy && !session ? <Loader2 className="spin" aria-hidden="true" /> : <Search aria-hidden="true" />} {t("Find my registrations", "माझ्या नोंदणी शोधा")}
+          </button>
+        </div>
+      </form>
+
+      {list && list.length === 0 && (
+        <div className="alert alert--info" role="status">
+          <AlertCircle aria-hidden="true" />
+          <span>
+            {t("No registration was found for this mobile number.", "या मोबाईल क्रमांकावर कोणतीही नोंदणी आढळली नाही.")}{" "}
+            <Link to="/participate">{t("Register now", "आता नोंदणी करा")}</Link>
+          </span>
+        </div>
+      )}
+
+      {list && list.length > 0 && (
+        <motion.section ref={listRef} className="stack cert-results" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} aria-live="polite">
+          <div className="cert-list__head">
+            <h3>
+              {t(`${session.total} registration(s) on this number`, `या क्रमांकावर ${mr(session.total)} नोंदणी`)}
+              {pageCount > 1 && <small className="cert-list__page"> · {t(`page ${pageIndex + 1} of ${pageCount}`, `पान ${mr(pageIndex + 1)} / ${mr(pageCount)}`)}</small>}
+            </h3>
+            {available.length > 1 && (
+              <button type="button" className="btn btn--primary btn--sm" onClick={downloadAll} disabled={allBusy}>
+                {allBusy ? <Loader2 className="spin" aria-hidden="true" /> : <Files aria-hidden="true" />}
+                {pageCount > 1
+                  ? t(`Download this page's ${available.length} (PDF)`, `या पानावरील ${mr(available.length)} डाउनलोड करा (PDF)`)
+                  : t(`Download all ${available.length} (PDF)`, `सर्व ${mr(available.length)} डाउनलोड करा (PDF)`)}
+              </button>
+            )}
+          </div>
+          {allError && <p className="field__error" role="alert"><AlertCircle size={14} aria-hidden="true" />{allError}</p>}
+          <ul className="cert-list">
+            {list.map((r) => {
+              const tone = r.certificate_available ? "ok" : ["rejected", "duplicate"].includes(r.status) ? "muted" : "waiting";
+              const state = r.certificate_available
+                ? t("Certificate ready", "अभिनंदन पत्र उपलब्ध")
+                : (lang === "mr" ? STATUS : STATUS_EN)[r.status]?.label;
+              const Icon = r.certificate_available ? BadgeCheck : tone === "muted" ? XCircle : Clock;
+              return (
+                <li key={r.registration_no} className={`cert-card cert-card--${tone}`}>
+                  {r.thumb_path ? <img className="cert-card__photo" src={assetUrl(r.thumb_path)} alt="" loading="lazy" /> : <span className="cert-card__photo" aria-hidden="true" />}
+                  <div className="stack" style={{ gap: 10 }}>
+                    <span className="cert-card__state"><Icon aria-hidden="true" /> {state}</span>
+                    <div>
+                      <h3>{r.name}</h3>
+                      <p className="cert-card__meta">
+                        <span>{t("Reg. No.", "नोंदणी क्र.")} <strong>{r.registration_no}</strong></span>
+                        {r.durgveer_no && <span>{t("Durgveer No.", "दुर्गवीर क्र.")} <strong>{num(r.durgveer_no)}</strong></span>}
+                        <span>{fmtDate(r.submitted_at)}</span>
+                        {r.district && <span>{r.district}</span>}
+                      </p>
+                    </div>
+                    {r.note && <p className="cert-card__note"><strong>{t("Note from AMRUT:", "अमृत संस्थेची टीप:")}</strong> {r.note}</p>}
+                    {r.status === "pending" && (
+                      <p className="cert-card__hint">{t("The certificate will be ready here once AMRUT has verified this registration.", "अमृत संस्थेकडून पडताळणी झाल्यावर अभिनंदन पत्र येथे उपलब्ध होईल.")}</p>
+                    )}
+                    {r.certificate_available && <CertificateButtons token={r.token} size="sm" />}
+                    {r.status === "info_requested" && (
+                      <Link className="btn btn--outline btn--sm" to={`/certificate?tab=status&registration=${encodeURIComponent(r.registration_no)}`}>
+                        {t("Send the information asked for", "मागितलेली माहिती पाठवा")}
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {pageCount > 1 && (
+            <nav className="cert-pager" aria-label={t("Pages", "पाने")}>
+              <button type="button" className="btn btn--outline btn--sm" onClick={() => showPage(pageIndex - 1)} disabled={busy || pageIndex === 0}>
+                <ChevronLeft aria-hidden="true" /> {t("Previous", "मागील")}
+              </button>
+              <span className="cert-pager__pos">{t(`Page ${pageIndex + 1} of ${pageCount}`, `पान ${mr(pageIndex + 1)} / ${mr(pageCount)}`)}</span>
+              <button type="button" className="btn btn--outline btn--sm" onClick={nextPage} disabled={busy || !page.next_before}>
+                {busy ? <Loader2 className="spin" aria-hidden="true" /> : null}{t("Next", "पुढील")} <ChevronRight aria-hidden="true" />
+              </button>
+            </nav>
+          )}
+        </motion.section>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- status (registration number + mobile)
 
 function Lookup({ initial, submitLabel, busy, onSubmit, error }) {
   const t = useT();
@@ -35,13 +250,13 @@ function Lookup({ initial, submitLabel, busy, onSubmit, error }) {
     e.preventDefault();
     const next = {};
     if (!registration.trim()) next.registration = t("Please enter your registration number.", "नोंदणी क्रमांक लिहा.");
-    if (!/^[6-9]\d{9}$/.test(phone)) next.phone = t("Please enter a valid 10-digit mobile number starting with 6, 7, 8 or 9.", "कृपया ६, ७, ८ किंवा ९ ने सुरू होणारा वैध १० अंकी मोबाईल क्रमांक लिहा.");
+    if (!/^[6-9]\d{9}$/.test(phone)) next.phone = t(...MOBILE_ERROR);
     setErrs(next);
     if (!Object.keys(next).length) onSubmit({ registration: registration.trim().toUpperCase(), phone });
   };
   return (
     <form className="form-grid form-grid--2" onSubmit={submit} noValidate>
-      <Field label={t("Registration Number", "नोंदणी क्रमांक")} required error={errs.registration} hint={t(`e.g. ${NUMBER_PREFIX}-000123 or just 123`, `उदा. ${NUMBER_PREFIX}-000123 किंवा फक्त 123`)}>
+      <Field label={t("Registration Number", "नोंदणी क्रमांक")} required error={errs.registration} hint={t(`e.g. ${NUMBER_PREFIX}-010123 or just 10123`, `उदा. ${NUMBER_PREFIX}-010123 किंवा फक्त 10123`)}>
         {(p) => <input {...p} className="input" value={registration} onChange={(e) => setRegistration(e.target.value)} autoComplete="off" maxLength={20} />}
       </Field>
       <Field label={t("Mobile Number", "मोबाईल क्रमांक")} required error={errs.phone}>
@@ -57,59 +272,7 @@ function Lookup({ initial, submitLabel, busy, onSubmit, error }) {
   );
 }
 
-function DownloadTab({ initial }) {
-  const t = useT();
-  const { lang } = useLang();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    if (!done) return;
-    const timer = setTimeout(() => setDone(false), 10000);
-    return () => clearTimeout(timer);
-  }, [done]);
-  async function download(q) {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await http.get("/certificates/download", { params: q, responseType: "blob", timeout: 60000 });
-      const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Durgotsav-${EDITION_YEAR}-Abhinandan-Patra-${q.registration}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      setDone(true);
-    } catch (err) {
-      const status = err?.response?.status;
-      const errObj = ERRORS[status];
-      setError(errObj ? errObj[lang] || errObj.en : toApiError(err).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="stack">
-      <p className="muted">
-        {t(
-          "Enter the registration number and mobile number received at registration. The certificate is available only after verification is complete.",
-          "नोंदणी करताना मिळालेला नोंदणी क्रमांक आणि मोबाईल क्रमांक लिहा. पडताळणी पूर्ण झाल्यावरच अभिनंदन पत्र उपलब्ध होते."
-        )}
-      </p>
-      {done && (
-        <div className="alert alert--success" role="status">
-          <CheckCircle2 aria-hidden="true" />
-          <span>{t("Congratulations! Your certificate has been downloaded (check your Downloads folder).", "अभिनंदन! आपले अभिनंदन पत्र डाउनलोड झाले आहे (Downloads फोल्डर पाहा).")}</span>
-        </div>
-      )}
-      <Lookup initial={initial} submitLabel={t("Download Certificate", "अभिनंदन पत्र डाउनलोड करा")} busy={busy} error={error} onSubmit={download} />
-    </div>
-  );
-}
-
-const STATUS_ICON = { pending: Clock, info_requested: AlertCircle, verified: BadgeCheck, rejected: XCircle, duplicate: XCircle };
+const STATUS_ICON = { pending: CheckCircle2, info_requested: AlertCircle, verified: BadgeCheck, rejected: XCircle, duplicate: XCircle };
 
 function Resubmit({ query, onDone }) {
   const t = useT();
@@ -163,7 +326,7 @@ function Resubmit({ query, onDone }) {
       {error && <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{error}</span></div>}
       <div>
         <button type="submit" className="btn btn--primary" disabled={busy}>
-          {busy && <Loader2 className="spin" aria-hidden="true" />} {t("Resubmit for Verification", "पुन्हा पडताळणीसाठी पाठवा")}
+          {busy && <Loader2 className="spin" aria-hidden="true" />} {t("Resubmit", "पुन्हा पाठवा")}
         </button>
       </div>
     </form>
@@ -210,19 +373,25 @@ function StatusTab({ initial }) {
             <dl className="status-card__meta">
               <div><dt>{t("Registration Number", "नोंदणी क्रमांक")}</dt><dd>{result.registration_no}</dd></div>
               <div><dt>{t("Registration Date", "नोंदणी दिनांक")}</dt><dd>{fmtDate(result.submitted_at)}</dd></div>
+              {result.durgveer_no && <div><dt>{t("Durgveer No.", "दुर्गवीर क्र.")}</dt><dd>{lang === "mr" ? mr(result.durgveer_no) : result.durgveer_no}</dd></div>}
               {result.fort && <div><dt>{t("Fort", "दुर्ग")}</dt><dd>{result.fort}</dd></div>}
               {result.district && <div><dt>{t("District", "जिल्हा")}</dt><dd>{result.district}</dd></div>}
             </dl>
             {result.note && <p className="status-card__note"><strong>{t("Note from AMRUT:", "अमृत संस्थेची टीप:")}</strong> {result.note}</p>}
             {result.status === "pending" && (
               <p className="muted">
-                {t(
-                  "Your registration is in the verification queue. The certificate will be available here once verification is complete.",
-                  "आपली नोंदणी पडताळणीसाठी रांगेत आहे. पडताळणी पूर्ण झाल्यावर अभिनंदन पत्र येथून डाउनलोड करता येईल."
-                )}
+                {result.certificate_available
+                  ? t(
+                    "Your certificate is ready. AMRUT will also review the photo; a registration that breaks the rules can be withdrawn.",
+                    "आपले अभिनंदन पत्र तयार आहे. अमृत संस्था छायाचित्राचीही तपासणी करेल; नियमांनुसार नसलेली नोंदणी अमान्य होऊ शकते."
+                  )
+                  : t(
+                    "Your registration is in the verification queue. The certificate will be available here once verification is complete.",
+                    "आपली नोंदणी पडताळणीसाठी रांगेत आहे. पडताळणी पूर्ण झाल्यावर अभिनंदन पत्र येथून डाउनलोड करता येईल."
+                  )}
               </p>
             )}
-            {result.certificate_available && <DownloadInline query={query} />}
+            {result.certificate_available && result.token && <CertificateButtons token={result.token} />}
           </div>
           {result.status === "info_requested" && <Resubmit query={query} onDone={setResult} />}
         </motion.div>
@@ -231,43 +400,24 @@ function StatusTab({ initial }) {
   );
 }
 
-function DownloadInline({ query }) {
-  const t = useT();
-  const [busy, setBusy] = useState(false);
-  return (
-    <button type="button" className="btn btn--primary" disabled={busy} onClick={async () => {
-      setBusy(true);
-      try {
-        const res = await http.get("/certificates/download", { params: query, responseType: "blob", timeout: 60000 });
-        const url = URL.createObjectURL(res.data);
-        Object.assign(document.createElement("a"), { href: url, download: `Durgotsav-${EDITION_YEAR}-${query.registration}.pdf` }).click();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      } finally {
-        setBusy(false);
-      }
-    }}>
-      {busy ? <Loader2 className="spin" aria-hidden="true" /> : <Download aria-hidden="true" />} {t("Download Certificate", "अभिनंदन पत्र डाउनलोड करा")}
-    </button>
-  );
-}
+// ---------------------------------------------------------------- verify (also the target of the QR code)
 
-function VerifyTab() {
+function VerifyTab({ initial }) {
   const t = useT();
   const { lang } = useLang();
-  const [number, setNumber] = useState("");
+  const [number, setNumber] = useState((initial || "").toUpperCase());
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const fmtDate = (v) => lang === "mr" ? mrDate(v) : enDate(v);
 
-  async function verify(e) {
-    e.preventDefault();
-    if (number.trim().length < 5) return setError(t("Please enter the certificate number.", "अभिनंदन पत्रावरील क्रमांक लिहा."));
+  async function verify(value) {
+    if (value.trim().length < 5) return setError(t("Please enter the certificate number.", "अभिनंदन पत्रावरील क्रमांक लिहा."));
     setBusy(true);
     setError("");
     setResult(null);
     try {
-      const { data } = await http.get(`/certificates/verify/${encodeURIComponent(number.trim())}`);
+      const { data } = await http.get(`/certificates/verify/${encodeURIComponent(value.trim())}`);
       setResult(data.data);
     } catch (err) {
       const e2 = toApiError(err);
@@ -278,17 +428,23 @@ function VerifyTab() {
       setBusy(false);
     }
   }
+  // Opened from the QR code on a certificate (?tab=verify&no=…): check it straight away
+  useEffect(() => {
+    if (initial) verify(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
+
   return (
     <div className="stack">
       <p className="muted">
         {t(
-          `Enter the number printed at the bottom of the certificate (e.g. AMRUT-${NUMBER_PREFIX}-000123) to verify it is authentic.`,
-          `अभिनंदन पत्राच्या खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-${NUMBER_PREFIX}-000123) लिहून ते अधिकृत आहे का ते तपासा.`
+          `Scan the QR code on the certificate, or enter the number printed at the bottom (e.g. AMRUT-${NUMBER_PREFIX}-010123) to verify it is authentic.`,
+          `अभिनंदन पत्रावरील QR कोड स्कॅन करा, किंवा खालच्या भागात छापलेला क्रमांक (उदा. AMRUT-${NUMBER_PREFIX}-010123) लिहून ते अधिकृत आहे का ते तपासा.`
         )}
       </p>
-      <form className="cluster verify-form" onSubmit={verify} noValidate>
+      <form className="cluster verify-form" onSubmit={(e) => { e.preventDefault(); verify(number); }} noValidate>
         <label className="sr-only" htmlFor="cert-no">{t("Certificate Number", "अभिनंदन पत्र क्रमांक")}</label>
-        <input id="cert-no" className="input" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} placeholder={`AMRUT-${NUMBER_PREFIX}-000123`} maxLength={40} />
+        <input id="cert-no" className="input" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} placeholder={`AMRUT-${NUMBER_PREFIX}-010123`} maxLength={40} />
         <button type="submit" className="btn btn--primary" disabled={busy}>
           {busy ? <Loader2 className="spin" aria-hidden="true" /> : <ShieldCheck aria-hidden="true" />} {t("Verify", "पडताळा")}
         </button>
@@ -299,7 +455,7 @@ function VerifyTab() {
           {result.valid ? <BadgeCheck aria-hidden="true" /> : <XCircle aria-hidden="true" />}
           <span>
             {result.valid
-              ? <><strong>{t("Authentic certificate.", "अधिकृत अभिनंदन पत्र.")}</strong> {result.name}{result.district ? `, ${result.district}` : ""} — {fmtDate(result.issued_at)}.</>
+              ? <><strong>{t("Authentic certificate.", "अधिकृत अभिनंदन पत्र.")}</strong> {result.name}{result.district ? `, ${result.district}` : ""} — {t("Durgveer No.", "दुर्गवीर क्र.")} {lang === "mr" ? mr(result.durgveer_no) : result.durgveer_no} · {result.registration_no} · {fmtDate(result.issued_at)}.</>
               : <><strong>{t("This certificate has been cancelled.", "हे अभिनंदन पत्र रद्द करण्यात आले आहे.")}</strong></>}
           </span>
         </div>
@@ -313,8 +469,11 @@ export default function Certificate() {
   const { lang } = useLang();
   const [params, setParams] = useSearchParams();
   const initialReg = params.get("registration") || "";
+  const initialNo = params.get("no") || "";
   const TABS = TABS_DEF.map(([k, label, Icon]) => [k, label[lang] || label.en, Icon]);
-  const tab = TABS.some(([k]) => k === params.get("tab")) ? params.get("tab") : "download";
+  // Earlier emails link here with ?registration=… and QR codes with ?no=…: open the tab that answers them
+  const fallback = initialNo ? "verify" : initialReg ? "status" : "download";
+  const tab = TABS.some(([k]) => k === params.get("tab")) ? params.get("tab") : fallback;
   const select = (key) => setParams((p) => { p.set("tab", key); return p; }, { replace: true });
 
   return (
@@ -322,16 +481,16 @@ export default function Certificate() {
       <Seo
         title={t("Congratulation Certificate", "अभिनंदन पत्र")}
         description={t(
-          `Durgotsav ${EDITION_YEAR} — download your digital certificate, check registration status, and verify certificates.`,
-          `दुर्गोत्सव ${EDITION_YEAR_MR} — नोंदणी क्रमांक व मोबाईल क्रमांक वापरून डिजिटल अभिनंदन पत्र डाउनलोड करा, नोंदणी स्थिती तपासा आणि अभिनंदन पत्राची पडताळणी करा.`
+          `Durgotsav ${EDITION_YEAR} — get all your digital certificates with your mobile number, check registration status, and verify certificates.`,
+          `दुर्गोत्सव ${EDITION_YEAR_MR} — मोबाईल क्रमांकावरून आपली सर्व डिजिटल अभिनंदन पत्रे डाउनलोड करा, नोंदणी स्थिती तपासा आणि अभिनंदन पत्राची पडताळणी करा.`
         )}
       />
       <PageHero
         eyebrow={t("॥ Certificate ॥", "॥ अभिनंदन पत्र ॥")}
         title={t("Your Digital Certificate", "आपले डिजिटल अभिनंदन पत्र")}
         lead={t(
-          "The certificate becomes available here after verification of registration and photo (usually within 24 hours).",
-          "नोंदणी व छायाचित्राची पडताळणी पूर्ण झाल्यानंतर (शक्यतो २४ तासांच्या आत) अभिनंदन पत्र येथे उपलब्ध होते."
+          "Your certificate is ready here once AMRUT has verified your registration and photo. Find every registration on your mobile number here.",
+          "अमृत संस्थेकडून नोंदणी व छायाचित्राची पडताळणी पूर्ण झाल्यावर आपले अभिनंदन पत्र येथे उपलब्ध होते. आपल्या मोबाईल क्रमांकावरील सर्व नोंदणी येथे पाहा."
         )}
       />
       <section className="section surface-parchment">
@@ -345,14 +504,14 @@ export default function Certificate() {
             ))}
           </div>
           <div className="card-light" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-            {tab === "download" && <DownloadTab initial={initialReg} />}
+            {tab === "download" && <MyCertificatesTab />}
             {tab === "status" && <StatusTab initial={initialReg} />}
-            {tab === "verify" && <VerifyTab />}
+            {tab === "verify" && <VerifyTab initial={initialNo} />}
           </div>
           <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
             {t(
-              <>The certificate is a record of participation and verified photo in Durgotsav; it does not create any financial, governmental or other rights. If you have any difficulty <Link to="/contact">contact us</Link>.</>,
-              <>अभिनंदन पत्र हे दुर्गोत्सवातील सहभाग व छायाचित्राची पडताळणी पूर्ण झाल्याची नोंद आहे; त्यातून कोणताही आर्थिक, शासकीय पदाचा किंवा अन्य हक्क निर्माण होत नाही. अडचण असल्यास <Link to="/contact">संपर्क साधा</Link>.</>
+              <>The certificate is a record of participation in Durgotsav; it does not create any financial, governmental or other rights. If you have any difficulty <Link to="/contact">contact us</Link>.</>,
+              <>अभिनंदन पत्र हे दुर्गोत्सवातील सहभागाची नोंद आहे; त्यातून कोणताही आर्थिक, शासकीय पदाचा किंवा अन्य हक्क निर्माण होत नाही. अडचण असल्यास <Link to="/contact">संपर्क साधा</Link>.</>
             )}
           </p>
         </div>
