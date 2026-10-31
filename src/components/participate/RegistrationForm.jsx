@@ -538,9 +538,6 @@ function Success({ result, email, onAnother, inModal = false }) {
         <button type="button" className="btn btn--outline" onClick={onAnother}>
           {t("Register Another", "आणखी एक नोंदणी करा")}
         </button>
-        <Link to="/certificate" className="btn btn--outline">
-          {t("All my registrations", "माझ्या सर्व नोंदणी")}
-        </Link>
       </div>
     </div>
   );
