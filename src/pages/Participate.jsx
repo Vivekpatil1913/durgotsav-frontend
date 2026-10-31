@@ -10,34 +10,20 @@ import { Reveal } from "../components/ui/Reveal.jsx";
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useRegistrationStatus, useSite } from "../context/SiteContext.jsx";
 import { useApi } from "../hooks/useApi.js";
-import { enDate, mrDate } from "../lib/format.js";
+import { useRegistrationNotice } from "../hooks/useRegistrationNotice.js";
 import { Markdown, sections } from "../lib/markdown.jsx";
 import "./pages.css";
 
-function ClosedNotice({ status }) {
-  const { settings } = useSite();
-  const { lang } = useLang();
+// Shown instead of the form while Admin → Settings → Registration form is off; the dates come from settings
+function ClosedNotice() {
   const t = useT();
-  const notStarted = status.reason === "not_started";
-  const fmt = (v) => v ? (lang === "mr" ? mrDate(v) : enDate(v)) : null;
-  const opensAt  = fmt(status.opensAt) ?? fmt(settings.registration?.opens_at);
-  const closesAt = fmt(settings.registration?.closes_at);
+  const notice = useRegistrationNotice();
   return (
     <div className="card-light closed-notice" role="status">
       <CalendarClock aria-hidden="true" />
-      <h2>
-        {notStarted
-          ? t("Online registration will begin soon", "ऑनलाइन नोंदणी लवकरच सुरू होईल")
-          : t("Registration is currently closed", "नोंदणी सध्या बंद आहे")}
-      </h2>
-      <p>
-        {notStarted
-          ? t(
-              `Online registration for Durgotsav will begin from ${opensAt}${closesAt ? ` to ${closesAt}` : ""}. Meanwhile, start preparing your fort and read the guidelines below.`,
-              `दुर्गोत्सवासाठी ऑनलाइन नोंदणी ${opensAt}${closesAt ? ` ते ${closesAt}` : ""} दरम्यान सुरू होईल. तोपर्यंत दुर्गाची तयारी सुरू करा आणि खालील संहिता वाचा.`
-            )
-          : settings.registration?.note || t("Check the Updates page for registration updates.", "नोंदणीबाबतच्या अद्यतनांसाठी अपडेट्स पान पाहा.")}
-      </p>
+      <h2>{notice.heading}</h2>
+      <p>{notice.text}</p>
+      {notice.note && <p>{notice.note}</p>}
       <div className="cluster" style={{ justifyContent: "center" }}>
         <Link to="/forts" className="btn btn--primary">{t("Choose a Fort", "दुर्ग निवडा")}</Link>
         <Link to="/certificate" className="btn btn--outline">{t("Already registered?", "आधी नोंदणी केली आहे?")}</Link>
@@ -111,7 +97,7 @@ export default function Participate() {
             </p>
           </div>
           <div id="register" className="participate-form">
-            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : status.open ? <RegistrationForm /> : <ClosedNotice status={status} />}
+            {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : status.open ? <RegistrationForm /> : <ClosedNotice />}
           </div>
         </div>
       </section>

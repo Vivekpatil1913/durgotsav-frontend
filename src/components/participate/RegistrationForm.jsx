@@ -55,7 +55,7 @@ function validate(v, photo, t) {
 export function RegistrationForm() {
   const t = useT();
   const { lang } = useLang();
-  const { settings } = useSite();
+  const { settings, refresh } = useSite();
   // null: the API has the check switched off (automated tests); otherwise { provider, site_key }
   const captchaConfig = settings.captcha ?? null;
   const districts = useApi("/districts").data?.data ?? [];
@@ -161,6 +161,7 @@ export function RegistrationForm() {
       next.captcha = t("The security check could not be completed. Please try again in a moment.", "सुरक्षा तपासणी पूर्ण होऊ शकली नाही. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.");
     } else if (apiErr.code === "REGISTRATION_CLOSED") {
       setFormError(t("Registration is closed right now.", "नोंदणी सध्या बंद आहे."));
+      refresh(); // an admin closed it while this page was open: the page swaps the form for the closed notice
     } else if (apiErr.status === 429) {
       setFormError(t("Too many registrations from this network. Please try again later.", "या नेटवर्कवरून खूप नोंदणी झाल्या. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा."));
     } else {
