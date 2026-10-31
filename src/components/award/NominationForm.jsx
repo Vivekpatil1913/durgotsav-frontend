@@ -458,7 +458,7 @@ export function NominationForm({ award, initialCategory }) {
               <div className="form-grid form-grid--2">
                 <div className="span-2" data-field="nominee_name">
                   <Field label={isOrg ? t("Full name of the organization", "संस्थेचे संपूर्ण नाव") : t("Full name", "पूर्ण नाव")} required {...fieldProps("nominee_name")}>
-                    {input("nominee_name", { max: 250, autoComplete: isOrg ? "organization" : "off" })}
+                    {input("nominee_name", { max: isOrg ? 250 : 160, autoComplete: isOrg ? "organization" : "off" })}
                   </Field>
                 </div>
 
