@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, ImagePlus, Loader2, Pencil, RefreshCw, Send, Trash2 } from "lucide-react";
-=======
 import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, Download, ImagePlus, Loader2, Pencil, RefreshCw, Send, Smartphone, Trash2 } from "lucide-react";
->>>>>>> frontend-mk
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
