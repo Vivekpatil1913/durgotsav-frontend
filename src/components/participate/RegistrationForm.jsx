@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, ImagePlus, Loader2, Pencil, RefreshCw, Send, Trash2 } from "lucide-react";
+=======
+import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, Download, ImagePlus, Loader2, Pencil, RefreshCw, Send, Smartphone, Trash2 } from "lucide-react";
+>>>>>>> frontend-mk
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
@@ -167,9 +171,9 @@ export function RegistrationForm() {
     } else {
       const own = validate(values, photo, t);
       for (const [field, message] of Object.entries(apiErr.details ?? {})) {
-        if (FIELD_ORDER.includes(field) && typeof message === "string") next[field] = own[field] ?? message;
+        if (FIELD_ORDER.includes(field) && typeof message === "string") next[field] = message;
       }
-      if (!Object.keys(next).length) setFormError(apiErr.message || t("An error occurred during registration.", "नोंदणी करताना अडचण आली."));
+      setFormError(apiErr.message || t("An error occurred during registration.", "नोंदणी करताना अडचण आली."));
     }
     setErrors((er) => ({ ...er, ...next }));
     if (Object.keys(next).length) focusFirstError(next);
@@ -226,9 +230,9 @@ export function RegistrationForm() {
   if (result) {
     return (
       <>
-        <Success result={result} email={values.email.trim()} onAnother={registerAnother} />
+        <Success result={result} phone={values.phone} email={values.email.trim()} onAnother={registerAnother} />
         <Modal open={resultOpen} onClose={() => setResultOpen(false)} labelledBy="reg-done-title" className="modal--result">
-          <Success result={result} email={values.email.trim()} onAnother={registerAnother} inModal />
+          <Success result={result} phone={values.phone} email={values.email.trim()} onAnother={registerAnother} inModal />
         </Modal>
       </>
     );
@@ -478,36 +482,49 @@ export function RegistrationForm() {
   );
 }
 
-// After a successful submit: shown in the pop-up (inModal) and, once that is closed, on the page. The certificate is
-// not there yet — it is generated when an admin approves the registration; the status link follows it.
-function Success({ result, email, onAnother, inModal = false }) {
+// After a successful submit: shown in the pop-up (inModal) and, once that is closed, on the page.
+function Success({ result, phone, email, onAnother, inModal = false }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const cardRef = useRef(null);
-  // The card replaces the much taller form, so the old scroll position would land below it — bring it into view once mounted.
-  // Braces matter: newer browsers return a Promise from scrollIntoView, and React would call it as the effect's cleanup and crash.
+
   useEffect(() => {
     if (!inModal) cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [inModal]);
+
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(result.registration_no);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard blocked — number is visible anyway */
+      /* clipboard blocked */
     }
   };
+
+  const isVerified = result.status === "verified";
+  const userPhone = result.phone || phone;
+  const downloadUrl = result.download_url || `/api/certificates/download?registration=${encodeURIComponent(result.registration_no)}&phone=${encodeURIComponent(userPhone)}`;
   const Title = inModal ? "h2" : "h3";
+
   return (
     <div ref={cardRef} className={inModal ? "reg-success reg-success--modal" : "reg-success card-light"} role={inModal ? undefined : "status"}>
       <span className="reg-success__icon"><CheckCircle2 aria-hidden="true" /></span>
-      <Title id={inModal ? "reg-done-title" : undefined}>{t("Registration Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी यशस्वी! जय भवानी, जय शिवाजी!")}</Title>
+      <Title id={inModal ? "reg-done-title" : undefined}>
+        {isVerified
+          ? t("Registration & Verification Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी व पडताळणी यशस्वी! जय भवानी, जय शिवाजी!")
+          : t("Registration Successful! Jai Bhavani, Jai Shivaji!", "नोंदणी यशस्वी! जय भवानी, जय शिवाजी!")}
+      </Title>
       <p>
-        {t(
-          `Thank you for taking part in Durgotsav ${EDITION_YEAR}. AMRUT will now check your photo and details; once verified, your certificate will be ready to download.`,
-          `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल धन्यवाद. अमृत संस्था आता आपले छायाचित्र व माहितीची पडताळणी करेल; पडताळणी पूर्ण झाल्यावर आपले अभिनंदन पत्र डाउनलोड करता येईल.`,
-        )}
+        {isVerified
+          ? t(
+              `Congratulations! Your fort photo has been verified by AI and your digital certificate is ready to download right now.`,
+              `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल हार्दिक अभिनंदन! आपल्या छायाचित्राची AI द्वारे यशस्वी पडताळणी झाली असून आपले डिजिटल अभिनंदन पत्र तयार आहे.`,
+            )
+          : t(
+              `Thank you for taking part in Durgotsav ${EDITION_YEAR}. AMRUT will now check your photo and details; once verified, the certificate link will be sent to your mobile.`,
+              `दुर्गोत्सव ${EDITION_YEAR_MR} मध्ये सहभागी झाल्याबद्दल धन्यवाद. अमृत संस्था आता आपले छायाचित्र व माहितीची पडताळणी करेल; पडताळणी पूर्ण झाल्यावर आपल्या मोबाईलवर SMS द्वारे अभिनंदन पत्राची लिंक पाठवली जाईल.`,
+            )}
       </p>
       <dl className="cert-facts">
         <div>
@@ -519,15 +536,48 @@ function Success({ result, email, onAnother, inModal = false }) {
             </button>
           </dd>
         </div>
+        {result.durgveer_no && (
+          <div>
+            <dt>{t("Durgveer number", "दुर्गवीर क्रमांक")}</dt>
+            <dd style={{ fontWeight: "700" }}>{mr(result.durgveer_no)}</dd>
+          </div>
+        )}
         <div>
           <dt>{t("Status", "स्थिती")}</dt>
-          <dd className="cert-facts__status"><Clock size={16} aria-hidden="true" /> {t("Verification pending", "पडताळणी प्रलंबित")}</dd>
+          <dd className="cert-facts__status" style={isVerified ? { color: "#16a34a", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" } : {}}>
+            {isVerified ? <CheckCircle2 size={16} aria-hidden="true" color="#16a34a" /> : <Clock size={16} aria-hidden="true" />}
+            {isVerified ? t("Verified (AI Approved)", "पडताळणी पूर्ण (AI प्रमाणित)") : t("Verification pending", "पडताळणी प्रलंबित")}
+          </dd>
         </div>
       </dl>
-      <div className="cluster" style={{ justifyContent: "center" }}>
-        <Link to={`/c/${result.token}`} className="btn btn--primary">
-          <Clock aria-hidden="true" /> {t("View registration status", "नोंदणीची स्थिती पाहा")}
-        </Link>
+      <div className="cluster" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
+        {isVerified ? (
+          <a
+            href={downloadUrl}
+            className="btn btn--primary"
+            style={{
+              background: "#c2641c",
+              color: "#fff",
+              padding: "12px 26px",
+              fontSize: "1.05rem",
+              fontWeight: "600",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              textDecoration: "none",
+              borderRadius: "999px",
+              boxShadow: "0 4px 14px rgba(194, 100, 28, 0.35)",
+            }}
+            download={`Durgotsav-Certificate-${result.registration_no}.pdf`}
+          >
+            <Download size={20} aria-hidden="true" />
+            <span>{t("Download Certificate", "अभिनंदन पत्र डाउनलोड करा")}</span>
+          </a>
+        ) : (
+          <Link to={`/c/${result.token}`} className="btn btn--primary">
+            <Clock aria-hidden="true" /> {t("View registration status", "नोंदणीची स्थिती पाहा")}
+          </Link>
+        )}
         <button type="button" className="btn btn--outline" onClick={onAnother}>
           {t("Register Another", "आणखी एक नोंदणी करा")}
         </button>
