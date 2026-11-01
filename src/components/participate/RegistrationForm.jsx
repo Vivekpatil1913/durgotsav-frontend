@@ -1,4 +1,4 @@
-import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, ImagePlus, Loader2, Pencil, RefreshCw, Send, Smartphone, Trash2 } from "lucide-react";
+import { AlertCircle, Camera, Check, CheckCircle2, Clock, Copy, ImagePlus, Loader2, Pencil, RefreshCw, Send, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
@@ -524,14 +524,6 @@ function Success({ result, email, onAnother, inModal = false }) {
           <dd className="cert-facts__status"><Clock size={16} aria-hidden="true" /> {t("Verification pending", "पडताळणी प्रलंबित")}</dd>
         </div>
       </dl>
-      <p className="muted reg-success__note">
-        <Smartphone size={16} aria-hidden="true" />
-        <span>
-          {email
-            ? t("A confirmation with your status link has been sent to your mobile by SMS. After verification you will get the certificate link by SMS and the certificate by email.", "नोंदणीची स्थिती पाहण्याची लिंक आपल्या मोबाईलवर SMS ने पाठवली आहे. पडताळणीनंतर अभिनंदन पत्राची लिंक SMS ने आणि अभिनंदन पत्र ईमेलवर मिळेल.")
-            : t("A confirmation with your status link has been sent to your mobile by SMS. After verification you will get the certificate link by SMS.", "नोंदणीची स्थिती पाहण्याची लिंक आपल्या मोबाईलवर SMS ने पाठवली आहे. पडताळणीनंतर अभिनंदन पत्राची लिंक SMS ने मिळेल.")}
-        </span>
-      </p>
       <div className="cluster" style={{ justifyContent: "center" }}>
         <Link to={`/c/${result.token}`} className="btn btn--primary">
           <Clock aria-hidden="true" /> {t("View registration status", "नोंदणीची स्थिती पाहा")}
