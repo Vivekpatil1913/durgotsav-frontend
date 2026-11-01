@@ -3,7 +3,7 @@ import axios from "axios";
 export const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 export const SITE_URL = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, "");
 
-export const http = axios.create({ baseURL: `${API_URL}/api`, timeout: 20000 });
+export const http = axios.create({ baseURL: `${API_URL}/api`, timeout: 60000 });
 
 // Normalises API / network failures into { message, status, code, details }
 export function toApiError(err) {
