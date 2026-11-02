@@ -224,6 +224,150 @@
 .closed-notice h2 {
   font-size: var(--text-2xl);
 }
+/* "Already registered?" band — directly under the form, outside its grid */
+.status-cta-wrap {
+  margin-top: var(--space-7);
+}
+.status-cta {
+  display: grid;
+  grid-template-areas: "icon" "body" "steps" "actions";
+  gap: var(--space-5);
+  padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+  overflow: hidden;
+  background:
+    radial-gradient(80% 140% at 100% 0%, rgb(242 177 58 / 0.16), transparent 60%),
+    var(--cream-50);
+}
+.status-cta::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--saffron-400), var(--bronze-500));
+}
+.status-cta__icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron-400), var(--bronze-500));
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(194 100 28 / 0.3);
+}
+.status-cta__icon svg {
+  width: 26px;
+  height: 26px;
+}
+.status-cta__body {
+  grid-area: body;
+  display: grid;
+  gap: var(--space-2);
+}
+.status-cta__body h2 {
+  font-size: var(--text-2xl);
+}
+.status-cta__body p {
+  max-width: 64ch;
+}
+.status-cta__steps {
+  grid-area: steps;
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-5) 0 0;
+  list-style: none;
+  border-top: 1px dashed var(--sand-400);
+}
+.status-cta__steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.status-cta__step-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid;
+}
+.status-cta__step-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.status-cta__steps li:nth-child(1) .status-cta__step-icon {
+  color: var(--warning-600);
+  background: rgb(183 121 31 / 0.1);
+  border-color: rgb(183 121 31 / 0.3);
+}
+.status-cta__steps li:nth-child(2) .status-cta__step-icon {
+  color: var(--success-600);
+  background: rgb(47 125 79 / 0.1);
+  border-color: rgb(47 125 79 / 0.3);
+}
+.status-cta__steps li:nth-child(3) .status-cta__step-icon {
+  color: var(--bronze-500);
+  background: rgb(194 100 28 / 0.1);
+  border-color: rgb(194 100 28 / 0.3);
+}
+.status-cta__steps strong {
+  display: block;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+.status-cta__steps small {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+.status-cta__actions {
+  grid-area: actions;
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  text-align: center;
+}
+.status-cta__actions .btn {
+  width: 100%;
+  white-space: normal; /* long Marathi label on narrow phones */
+}
+@media (min-width: 640px) {
+  .status-cta__steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  /* connector line between the steps */
+  .status-cta__steps li:not(:last-child)::after {
+    content: "";
+    flex: 1;
+    min-width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sand-400), transparent);
+  }
+  .status-cta__actions .btn {
+    width: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .status-cta {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "icon body actions" "steps steps steps";
+    align-items: center;
+    column-gap: var(--space-6);
+  }
+  .status-cta__icon {
+    align-self: start;
+    width: 68px;
+    height: 68px;
+  }
+  .status-cta__icon svg {
+    width: 32px;
+    height: 32px;
+  }
+}
 .rules-section {
   padding-top: var(--space-8);
 }

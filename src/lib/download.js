@@ -30,7 +30,3 @@ export async function downloadFile(url, { params, filename } = {}) {
 // Certificate files behind a signed link (/c/<token>): format "pdf" or "jpg"
 export const downloadCertificate = (token, format = "pdf") =>
   downloadFile(`/certificates/link/${encodeURIComponent(token)}/download`, { params: { format } });
-
-// "Download all": every valid certificate among these links, one PDF
-export const downloadAllCertificates = (tokens) =>
-  downloadFile("/certificates/bundle", { params: { tokens: tokens.join(",") } });
