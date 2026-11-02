@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowRight, Award, Image as ImageIcon, Info, Trophy } from "lucide-react";
+import { ArrowRight, Award, Info, Trophy } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
@@ -130,16 +130,18 @@ export function Hero() {
           )}
         </p>
         <div className="hero__actions">
-          <Link to="/#world-record" className="hero-btn hero-btn--primary">
-            <span>{t("See world record glory", "विश्वविक्रम पाहा")}</span>
-            <span className="hero-btn__circle" aria-hidden="true"><ArrowRight size={19} strokeWidth={2.6} /></span>
-          </Link>
-          <Link to="/album" className="hero-btn hero-btn--outline">
-            <ImageIcon className="hero-btn__icon" aria-hidden="true" />
+          <Link to="/#world-record" className="hero-btn hero-btn--outline">
+            <Trophy className="hero-btn__icon" aria-hidden="true" />
             <span>
-              {t("Largest Online Photo Album", "सर्वात मोठा ऑनलाइन फोटो अल्बम")}<br />
-              {t("of Handmade Sculptures", "हस्तनिर्मित शिल्पांचा")} <ArrowRight className="hero-btn__arrow" size={15} aria-hidden="true" />
+              {t("See world record glory", "विश्वविक्रम पाहा")} <ArrowRight className="hero-btn__arrow" size={15} aria-hidden="true" />
             </span>
+          </Link>
+          <Link to="/participate#register" className="hero-btn hero-btn--primary">
+            <span>
+              {t("Participate in", `अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`)}<br />
+              {t(`Amrut Durgotsav ${EDITION_YEAR}`, "मध्ये सहभागी व्हा")}
+            </span>
+            <span className="hero-btn__circle" aria-hidden="true"><ArrowRight size={19} strokeWidth={2.6} /></span>
           </Link>
         </div>
       </div>
