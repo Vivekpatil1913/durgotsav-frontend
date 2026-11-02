@@ -1,4 +1,4 @@
-import { CalendarClock, Camera, Leaf, ShieldAlert, Users } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarClock, Camera, Clock, Download, FileSearch, Leaf, Search, ShieldAlert, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { RegistrationForm } from "../components/participate/RegistrationForm.jsx";
@@ -29,6 +29,50 @@ function ClosedNotice() {
         <Link to="/certificate" className="btn btn--outline">{t("Already registered?", "आधी नोंदणी केली आहे?")}</Link>
       </div>
     </div>
+  );
+}
+
+// Under the form: people who registered earlier come back for their status and, once AMRUT approves, the certificate
+function StatusCta() {
+  const t = useT();
+  const STEPS = [
+    [Clock,      t("Registered", "नोंदणी झाली"),                   t("Waiting for verification", "पडताळणीच्या प्रतीक्षेत")],
+    [BadgeCheck, t("Approved by AMRUT", "अमृत संस्थेची मान्यता"),    t("Photo and details verified", "छायाचित्र व माहिती पडताळली")],
+    [Download,   t("Download certificate", "अभिनंदन पत्र डाउनलोड"), t("As a PDF or an image", "PDF किंवा प्रतिमा स्वरूपात")],
+  ];
+  return (
+    <Reveal as="section" className="card-light status-cta" aria-labelledby="status-cta-title">
+      <span className="status-cta__icon"><FileSearch aria-hidden="true" /></span>
+      <div className="status-cta__body">
+        <span className="eyebrow">{t("Already registered?", "आधी नोंदणी केली आहे?")}</span>
+        <h2 id="status-cta-title">{t("Check your status and download your certificate", "नोंदणीची स्थिती पाहा व अभिनंदन पत्र डाउनलोड करा")}</h2>
+        <p className="muted">
+          {t(
+            "Enter the mobile number you registered with to see every registration on it. Once AMRUT has approved a registration, its congratulation certificate is ready to download.",
+            "नोंदणी करताना दिलेला मोबाईल क्रमांक लिहून त्यावरील सर्व नोंदणी पाहा. अमृत संस्थेने नोंदणीला मान्यता दिल्यावर त्याचे अभिनंदन पत्र डाउनलोड करता येईल."
+          )}
+        </p>
+      </div>
+      <ol className="status-cta__steps">
+        {STEPS.map(([Icon, title, text]) => (
+          <li key={title}>
+            <span className="status-cta__step-icon"><Icon aria-hidden="true" /></span>
+            <span>
+              <strong>{title}</strong>
+              <small>{text}</small>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="status-cta__actions">
+        <Link to="/certificate?tab=download" className="btn btn--primary btn--lg">
+          <Search aria-hidden="true" /> {t("Check status & download", "स्थिती पाहा व डाउनलोड करा")}
+        </Link>
+        <Link to="/certificate?tab=status" className="link-arrow">
+          {t("Have a registration number? Check by number", "नोंदणी क्रमांक आहे? क्रमांकाने तपासा")} <ArrowRight aria-hidden="true" />
+        </Link>
+      </div>
+    </Reveal>
   );
 }
 
@@ -99,6 +143,10 @@ export default function Participate() {
           <div id="register" className="participate-form">
             {status.reason === "loading" ? <div className="skeleton" style={{ height: 520 }} /> : status.open ? <RegistrationForm /> : <ClosedNotice />}
           </div>
+        </div>
+        {/* Outside the form grid, so the sticky highlights column never slides over it */}
+        <div className="container status-cta-wrap">
+          <StatusCta />
         </div>
       </section>
 

@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { AlertCircle, BadgeCheck, CheckCircle2, ChevronLeft, ChevronRight, Clock, Files, ImagePlus, Loader2, Search, ShieldCheck, Smartphone, XCircle } from "lucide-react";
+import { AlertCircle, BadgeCheck, CheckCircle2, Clock, ImagePlus, Loader2, Search, ShieldCheck, Smartphone, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CertificateButtons, certificateError } from "../components/certificate/CertificateButtons.jsx";
+import { CertificateButtons } from "../components/certificate/CertificateButtons.jsx";
 import { Captcha } from "../components/participate/Captcha.jsx";
 import { digitsOnly, Field } from "../components/participate/fields.jsx";
 import "../components/participate/registration.css";
@@ -13,7 +13,6 @@ import { EDITION_YEAR, EDITION_YEAR_MR, NUMBER_PREFIX } from "../config/edition.
 import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { http, toApiError } from "../lib/api.js";
-import { downloadAllCertificates } from "../lib/download.js";
 import { assetUrl, enDate, mr, mrDate, STATUS, STATUS_EN } from "../lib/format.js";
 import { preparePhoto } from "../lib/image.js";
 import "./pages.css";
@@ -36,10 +35,13 @@ const CAPTCHA_PROMPT = ["Please tick 'I am not a robot' (मी रोबोट 
 
 // ---------------------------------------------------------------- my registrations (by mobile number)
 
+// Registrations fetched per request: the newest few show at once, the rest load as the list is scrolled
+const LOOKUP_BATCH = 5;
+
 /**
- * Every registration of one mobile number — any number of them — newest first, PAGE_SIZE at a time. The first page
- * needs the CAPTCHA; it returns a lookup token that fetches the following pages (30 minutes) without a new tick.
- * pages: the pages seen so far, [{ data, next_before }]; Previous shows them again without asking the server.
+ * Every registration of one mobile number — any number of them — newest first. The list scrolls in its own box and
+ * fetches the next LOOKUP_BATCH from the server as its end comes into view. The first request needs the CAPTCHA; it
+ * returns a lookup token that fetches the rest (30 minutes) without a new tick.
  */
 function MyCertificatesTab() {
   const t = useT();
@@ -51,16 +53,27 @@ function MyCertificatesTab() {
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState("");
-  const [session, setSession] = useState(null); // { lookupToken, total, pageSize }
-  const [pages, setPages] = useState([]);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [allBusy, setAllBusy] = useState(false);
-  const [allError, setAllError] = useState("");
+  const [session, setSession] = useState(null); // { lookupToken, total }
+  const [list, setList] = useState(null);
+  const [nextBefore, setNextBefore] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [moreError, setMoreError] = useState("");
   const captchaRef = useRef(null);
-  const listRef = useRef(null);
+  const scrollRef = useRef(null);
+  const endRef = useRef(null);
+  const searchId = useRef(0); // a new search drops the "more" answers still on their way for the previous one
+  const loading = useRef(false);
+  const loadMoreRef = useRef(null);
   const fmtDate = (v) => (lang === "mr" ? mrDate(v) : enDate(v));
   const num = (n) => (lang === "mr" ? mr(n) : String(n));
   const expired = t("This search has expired. Please search again.", "ही शोध मुदत संपली. कृपया पुन्हा शोधा.");
+
+  const reset = () => {
+    setSession(null);
+    setList(null);
+    setNextBefore(null);
+    setMoreError("");
+  };
 
   async function search(e) {
     e.preventDefault();
@@ -69,75 +82,78 @@ function MyCertificatesTab() {
     if (captchaConfig && !captchaToken) next.captcha = t(...CAPTCHA_PROMPT);
     setErrors(next);
     if (Object.keys(next).length) return;
+    searchId.current += 1;
+    loading.current = false;
+    setLoadingMore(false);
     setBusy(true);
     setError("");
-    setAllError("");
     try {
-      const { data } = await http.post("/certificates/lookup", { phone, captcha_token: captchaToken ?? undefined });
-      setSession({ lookupToken: data.meta.lookup_token, total: data.meta.total, pageSize: data.meta.page_size });
-      setPages([{ data: data.data, next_before: data.meta.next_before }]);
-      setPageIndex(0);
+      const { data } = await http.post("/certificates/lookup", { phone, limit: LOOKUP_BATCH, captcha_token: captchaToken ?? undefined });
+      setSession({ lookupToken: data.meta.lookup_token, total: data.meta.total });
+      setList(data.data);
+      setNextBefore(data.meta.next_before);
+      setMoreError("");
+      scrollRef.current?.scrollTo({ top: 0 });
     } catch (err) {
       const apiErr = toApiError(err);
       if (apiErr.code?.startsWith("CAPTCHA")) setErrors({ captcha: t("The 'I am not a robot' check expired. Please tick it again.", "'मी रोबोट नाही' तपासणीची मुदत संपली. कृपया पुन्हा खूण करा.") });
       else setError(ERRORS[apiErr.status]?.[lang] ?? apiErr.message);
-      setSession(null);
-      setPages([]);
+      reset();
     } finally {
       setBusy(false);
       captchaRef.current?.reset();
     }
   }
 
-  const showPage = (index) => {
-    setPageIndex(index);
-    setAllError("");
-    requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  };
-
-  async function nextPage() {
-    if (pageIndex + 1 < pages.length) return showPage(pageIndex + 1);
-    setBusy(true);
-    setError("");
+  async function loadMore() {
+    if (loading.current || !session || !nextBefore) return;
+    const id = searchId.current;
+    loading.current = true;
+    setLoadingMore(true);
+    setMoreError("");
     try {
-      const { data } = await http.get("/certificates/lookup", { params: { lookup_token: session.lookupToken, before: pages[pageIndex].next_before } });
-      setPages((p) => [...p, { data: data.data, next_before: data.meta.next_before }]);
-      showPage(pageIndex + 1);
+      const { data } = await http.get("/certificates/lookup", { params: { lookup_token: session.lookupToken, before: nextBefore, limit: LOOKUP_BATCH } });
+      if (id !== searchId.current) return;
+      setList((l) => [...l, ...data.data]);
+      setNextBefore(data.meta.next_before);
     } catch (err) {
+      if (id !== searchId.current) return;
       const apiErr = toApiError(err);
-      setError(apiErr.code === "LOOKUP_EXPIRED" || apiErr.status === 400 ? expired : ERRORS[apiErr.status]?.[lang] ?? apiErr.message);
-      if (apiErr.code === "LOOKUP_EXPIRED") {
-        setSession(null);
-        setPages([]);
+      if (apiErr.code === "LOOKUP_EXPIRED" || apiErr.status === 400) {
+        reset();
+        setError(expired);
+      } else {
+        setMoreError(ERRORS[apiErr.status]?.[lang] ?? apiErr.message);
       }
     } finally {
-      setBusy(false);
+      if (id === searchId.current) {
+        loading.current = false;
+        setLoadingMore(false);
+      }
     }
   }
 
-  const page = pages[pageIndex];
-  const list = page?.data ?? null;
-  const pageCount = session ? Math.max(1, Math.ceil(session.total / (session.pageSize || 20))) : 0;
-  const available = list?.filter((r) => r.certificate_available) ?? [];
-
-  async function downloadAll() {
-    setAllBusy(true);
-    setAllError("");
-    try {
-      await downloadAllCertificates(available.map((r) => r.token));
-    } catch (err) {
-      setAllError(certificateError(err, t));
-    } finally {
-      setAllBusy(false);
-    }
-  }
+  // Next few from the server once the end of the list is near — and again at once if it is still in view
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  });
+  useEffect(() => {
+    const end = endRef.current;
+    if (!end || !nextBefore || moreError) return undefined;
+    const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && loadMoreRef.current(), {
+      root: scrollRef.current,
+      rootMargin: "0px 0px 240px 0px",
+    });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [session, nextBefore, moreError]);
 
   return (
     <div className="stack">
       <p className="muted">
         {t(
-          "Enter the mobile number you registered with. Every registration on that number is listed with its status; approved ones can be downloaded as a PDF or image, or all of a page at once.",
-          "नोंदणी करताना दिलेला मोबाईल क्रमांक लिहा. त्या क्रमांकावरील सर्व नोंदणी स्थितीसह येथे दिसतील; पडताळणी पूर्ण झालेली अभिनंदन पत्रे PDF किंवा प्रतिमा म्हणून, किंवा एका पानावरील सर्व एकत्र डाउनलोड करा.",
+          "Enter the mobile number you registered with. Every registration on that number is listed with its status; approved ones can be downloaded as a PDF or an image.",
+          "नोंदणी करताना दिलेला मोबाईल क्रमांक लिहा. त्या क्रमांकावरील सर्व नोंदणी स्थितीसह येथे दिसतील; पडताळणी पूर्ण झालेली अभिनंदन पत्रे PDF किंवा प्रतिमा म्हणून डाउनलोड करा.",
         )}
       </p>
       <form className="stack" onSubmit={search} noValidate>
@@ -154,7 +170,7 @@ function MyCertificatesTab() {
         {error && <div className="alert alert--error" role="alert"><AlertCircle aria-hidden="true" /><span>{error}</span></div>}
         <div>
           <button type="submit" className={`btn btn--primary ${captchaConfig && !captchaToken ? "reg-submit is-blocked" : ""}`} disabled={busy}>
-            {busy && !session ? <Loader2 className="spin" aria-hidden="true" /> : <Search aria-hidden="true" />} {t("Find my registrations", "माझ्या नोंदणी शोधा")}
+            {busy ? <Loader2 className="spin" aria-hidden="true" /> : <Search aria-hidden="true" />} {t("Find my registrations", "माझ्या नोंदणी शोधा")}
           </button>
         </div>
       </form>
@@ -170,69 +186,68 @@ function MyCertificatesTab() {
       )}
 
       {list && list.length > 0 && (
-        <motion.section ref={listRef} className="stack cert-results" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} aria-live="polite">
+        <motion.section className="stack cert-results" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} aria-labelledby="cert-results-title">
           <div className="cert-list__head">
-            <h3>
-              {t(`${session.total} registration(s) on this number`, `या क्रमांकावर ${mr(session.total)} नोंदणी`)}
-              {pageCount > 1 && <small className="cert-list__page"> · {t(`page ${pageIndex + 1} of ${pageCount}`, `पान ${mr(pageIndex + 1)} / ${mr(pageCount)}`)}</small>}
-            </h3>
-            {available.length > 1 && (
-              <button type="button" className="btn btn--primary btn--sm" onClick={downloadAll} disabled={allBusy}>
-                {allBusy ? <Loader2 className="spin" aria-hidden="true" /> : <Files aria-hidden="true" />}
-                {pageCount > 1
-                  ? t(`Download this page's ${available.length} (PDF)`, `या पानावरील ${mr(available.length)} डाउनलोड करा (PDF)`)
-                  : t(`Download all ${available.length} (PDF)`, `सर्व ${mr(available.length)} डाउनलोड करा (PDF)`)}
-              </button>
+            <h3 id="cert-results-title">{t(`${session.total} registration(s) on this number`, `या क्रमांकावर ${mr(session.total)} नोंदणी`)}</h3>
+            {nextBefore && (
+              <span className="cert-list__count" aria-live="polite">
+                {t(`Showing ${list.length} of ${session.total} · scroll for more`, `${mr(session.total)} पैकी ${mr(list.length)} दाखवल्या · आणखी पाहण्यासाठी स्क्रोल करा`)}
+              </span>
             )}
           </div>
-          {allError && <p className="field__error" role="alert"><AlertCircle size={14} aria-hidden="true" />{allError}</p>}
-          <ul className="cert-list">
-            {list.map((r) => {
-              const tone = r.certificate_available ? "ok" : ["rejected", "duplicate"].includes(r.status) ? "muted" : "waiting";
-              const state = r.certificate_available
-                ? t("Certificate ready", "अभिनंदन पत्र उपलब्ध")
-                : (lang === "mr" ? STATUS : STATUS_EN)[r.status]?.label;
-              const Icon = r.certificate_available ? BadgeCheck : tone === "muted" ? XCircle : Clock;
-              return (
-                <li key={r.registration_no} className={`cert-card cert-card--${tone}`}>
-                  {r.thumb_path ? <img className="cert-card__photo" src={assetUrl(r.thumb_path)} alt="" loading="lazy" /> : <span className="cert-card__photo" aria-hidden="true" />}
-                  <div className="stack" style={{ gap: 10 }}>
-                    <span className="cert-card__state"><Icon aria-hidden="true" /> {state}</span>
-                    <div>
-                      <h3>{r.name}</h3>
-                      <p className="cert-card__meta">
-                        <span>{t("Reg. No.", "नोंदणी क्र.")} <strong>{r.registration_no}</strong></span>
-                        {r.durgveer_no && <span>{t("Durgveer No.", "दुर्गवीर क्र.")} <strong>{num(r.durgveer_no)}</strong></span>}
-                        <span>{fmtDate(r.submitted_at)}</span>
-                        {r.district && <span>{r.district}</span>}
-                      </p>
+          {/* data-lenis-prevent: the wheel scrolls this box natively instead of the page */}
+          <div ref={scrollRef} className="cert-scroll" data-lenis-prevent tabIndex={0} role="region" aria-labelledby="cert-results-title">
+            <ul className="cert-list">
+              {list.map((r) => {
+                const tone = r.certificate_available ? "ok" : ["rejected", "duplicate"].includes(r.status) ? "muted" : "waiting";
+                const state = r.certificate_available
+                  ? t("Certificate ready", "अभिनंदन पत्र उपलब्ध")
+                  : (lang === "mr" ? STATUS : STATUS_EN)[r.status]?.label;
+                const Icon = r.certificate_available ? BadgeCheck : tone === "muted" ? XCircle : Clock;
+                return (
+                  <li key={r.registration_no} className={`cert-card cert-card--${tone}`}>
+                    {r.thumb_path ? <img className="cert-card__photo" src={assetUrl(r.thumb_path)} alt="" loading="lazy" /> : <span className="cert-card__photo" aria-hidden="true" />}
+                    <div className="stack" style={{ gap: 10 }}>
+                      <span className="cert-card__state"><Icon aria-hidden="true" /> {state}</span>
+                      <div>
+                        <h3>{r.name}</h3>
+                        <p className="cert-card__meta">
+                          <span>{t("Reg. No.", "नोंदणी क्र.")} <strong>{r.registration_no}</strong></span>
+                          {r.durgveer_no && <span>{t("Durgveer No.", "दुर्गवीर क्र.")} <strong>{num(r.durgveer_no)}</strong></span>}
+                          <span>{fmtDate(r.submitted_at)}</span>
+                          {r.district && <span>{r.district}</span>}
+                        </p>
+                      </div>
+                      {r.note && <p className="cert-card__note"><strong>{t("Note from AMRUT:", "अमृत संस्थेची टीप:")}</strong> {r.note}</p>}
+                      {r.status === "pending" && (
+                        <p className="cert-card__hint">{t("The certificate will be ready here once AMRUT has verified this registration.", "अमृत संस्थेकडून पडताळणी झाल्यावर अभिनंदन पत्र येथे उपलब्ध होईल.")}</p>
+                      )}
+                      {r.certificate_available && <CertificateButtons token={r.token} size="sm" />}
+                      {r.status === "info_requested" && (
+                        <Link className="btn btn--outline btn--sm" to={`/certificate?tab=status&registration=${encodeURIComponent(r.registration_no)}`}>
+                          {t("Send the information asked for", "मागितलेली माहिती पाठवा")}
+                        </Link>
+                      )}
                     </div>
-                    {r.note && <p className="cert-card__note"><strong>{t("Note from AMRUT:", "अमृत संस्थेची टीप:")}</strong> {r.note}</p>}
-                    {r.status === "pending" && (
-                      <p className="cert-card__hint">{t("The certificate will be ready here once AMRUT has verified this registration.", "अमृत संस्थेकडून पडताळणी झाल्यावर अभिनंदन पत्र येथे उपलब्ध होईल.")}</p>
-                    )}
-                    {r.certificate_available && <CertificateButtons token={r.token} size="sm" />}
-                    {r.status === "info_requested" && (
-                      <Link className="btn btn--outline btn--sm" to={`/certificate?tab=status&registration=${encodeURIComponent(r.registration_no)}`}>
-                        {t("Send the information asked for", "मागितलेली माहिती पाठवा")}
-                      </Link>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          {pageCount > 1 && (
-            <nav className="cert-pager" aria-label={t("Pages", "पाने")}>
-              <button type="button" className="btn btn--outline btn--sm" onClick={() => showPage(pageIndex - 1)} disabled={busy || pageIndex === 0}>
-                <ChevronLeft aria-hidden="true" /> {t("Previous", "मागील")}
-              </button>
-              <span className="cert-pager__pos">{t(`Page ${pageIndex + 1} of ${pageCount}`, `पान ${mr(pageIndex + 1)} / ${mr(pageCount)}`)}</span>
-              <button type="button" className="btn btn--outline btn--sm" onClick={nextPage} disabled={busy || !page.next_before}>
-                {busy ? <Loader2 className="spin" aria-hidden="true" /> : null}{t("Next", "पुढील")} <ChevronRight aria-hidden="true" />
-              </button>
-            </nav>
-          )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div ref={endRef} className="cert-scroll__end">
+              {loadingMore ? (
+                <span className="cert-scroll__status" role="status"><Loader2 className="spin" aria-hidden="true" /> {t("Loading more…", "आणखी नोंदणी आणत आहे…")}</span>
+              ) : moreError ? (
+                <>
+                  <p className="field__error" role="alert"><AlertCircle size={14} aria-hidden="true" />{moreError}</p>
+                  <button type="button" className="btn btn--outline btn--sm" onClick={loadMore}>{t("Try again", "पुन्हा प्रयत्न करा")}</button>
+                </>
+              ) : nextBefore ? (
+                <button type="button" className="btn btn--outline btn--sm" onClick={loadMore}>{t("Show more", "आणखी दाखवा")}</button>
+              ) : list.length > LOOKUP_BATCH ? (
+                <span className="cert-scroll__status">{t(`All ${list.length} registrations shown`, `सर्व ${mr(list.length)} नोंदणी दाखवल्या`)}</span>
+              ) : null}
+            </div>
+          </div>
         </motion.section>
       )}
     </div>
