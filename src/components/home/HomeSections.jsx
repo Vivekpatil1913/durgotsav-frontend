@@ -257,7 +257,7 @@ export function Journey() {
     [Hammer, t("Build a Fort", "दुर्ग उभारा"),
       t("Use eco-friendly materials and your creativity to build a replica of a fort.", "पर्यावरणपूरक साहित्याचा वापर करून आपल्या कल्पकतेने एका दुर्गाची प्रतिकृती तयार करा.")],
     [Camera, t("Take a Photo", "छायाचित्र काढा"),
-      t("Take a photo (Selfie/Photograph) where both you and your fort replica are clearly visible.", "आपण व आपली प्रतिकृती स्पष्ट दिसतील असे स्वतःचे छायाचित्र (Selfie/Photograph) काढा.")],
+      t("Take a selfie with your fort replica or a photograph of the fort replica, with the replica clearly visible.", "प्रतिकृती स्पष्ट दिसेल असा दुर्ग प्रतिकृतीसोबत सेल्फी किंवा दुर्ग प्रतिकृतीचे छायाचित्र काढा.")],
     [Upload, t("Register & Upload", "नोंदणी व अपलोड"),
       t("Fill the one-page registration form on the website and upload your photo. You will receive a registration number.", "संकेतस्थळावरील एक पानी नोंदणी अर्ज भरा आणि छायाचित्र अपलोड करा. आपल्याला नोंदणी क्रमांक मिळेल.")],
     [Award,  t("Get the Certificate", "अभिनंदन पत्र मिळवा"),

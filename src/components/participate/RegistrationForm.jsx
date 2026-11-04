@@ -47,7 +47,7 @@ function validate(v, photo, t) {
   // optional (SRS v2.1 REQ-01), but checked when given
   if (v.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = t("Email address is invalid — correct it or leave it blank.", "ईमेल पत्ता योग्य नाही — दुरुस्त करा किंवा रिकामा ठेवा.");
   if (!v.district_id) e.district_id = t("Please select your district.", "आपला जिल्हा निवडा.");
-  if (!photo) e.photo = t("Please select a photo of your replica with its builder(s).", "प्रतिकृती व ती घडवणाऱ्यांचा फोटो निवडा.");
+  if (!photo) e.photo = t("Please select a selfie with your replica or a photograph of the fort replica.", "प्रतिकृतीसोबतचा सेल्फी किंवा दुर्ग प्रतिकृतीचे छायाचित्र निवडा.");
   if (!v.consent) e.consent = t("You must accept the rules to proceed.", "पुढे जाण्यासाठी नियम मान्य करणे आवश्यक आहे.");
   return e;
 }
@@ -349,12 +349,12 @@ export function RegistrationForm() {
                 <span className="photo-guide__icon"><Camera aria-hidden="true" /></span>
                 <div>
                   <h3 id="photo-guide-title">{t("Before you upload your replica photo", "दुर्ग प्रतिकृतीचा फोटो अपलोड करताना घ्यावयाची काळजी")}</h3>
-                  <span className="photo-guide__tag">{t("About 75% fort replica · 25% you / your team", "सुमारे ७५% दुर्ग प्रतिकृती · २५% आपण / आपली टीम")}</span>
+                  <span className="photo-guide__tag">{t("With people in the photo: about 75% fort replica · 25% you / your team", "फोटोत व्यक्ती असल्यास: सुमारे ७५% दुर्ग प्रतिकृती · २५% आपण / आपली टीम")}</span>
                 </div>
               </header>
               <FrameShare guide={PHOTO_RULE} />
               <ul className="photo-guide__rules" id="photo-rules">
-                <li><Check aria-hidden="true" />{t("The replica fills most of the frame; you or your team stand beside it (a selfie works).", "फोटोचा बहुतांश भाग प्रतिकृतीने व्यापलेला असावा; आपण किंवा आपली टीम बाजूला उभे असावे (सेल्फीही चालेल).")}</li>
+                <li><Check aria-hidden="true" />{t("A selfie with your replica or a photograph of the fort replica; the replica fills most of the frame.", "प्रतिकृतीसोबतचा सेल्फी किंवा दुर्ग प्रतिकृतीचे छायाचित्र; फोटोचा बहुतांश भाग प्रतिकृतीने व्यापलेला असावा.")}</li>
                 <li><Check aria-hidden="true" />{t("Keep the whole replica in the frame, in good light and in focus.", "संपूर्ण प्रतिकृती फ्रेममध्ये, चांगल्या प्रकाशात व स्पष्ट दिसावी.")}</li>
                 <li><Check aria-hidden="true" />{t("Only a replica you built yourself — no internet, AI-made or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचाच फोटो — इंटरनेटवरील, AI ने बनवलेले किंवा एडिट केलेले फोटो नकोत.")}</li>
                 <li><Check aria-hidden="true" /><span>{t("One photo · JPG, PNG or WebP · ", "एकच फोटो · JPG, PNG किंवा WebP · ")}<strong>{t(`max ${MAX_UPLOAD_MB} MB`, `कमाल ${MAX_UPLOAD_MB} MB`)}</strong></span></li>

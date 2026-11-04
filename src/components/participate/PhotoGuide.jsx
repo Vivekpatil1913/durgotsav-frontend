@@ -2,7 +2,8 @@ import { Camera, Castle, CircleCheck, User, Users } from "lucide-react";
 import { useT } from "../../context/LanguageContext.jsx";
 import { mr } from "../../lib/format.js";
 
-// The campaign's photo rule: an individual stands beside the replica, a team poses around it.
+// The campaign's photo rule: a selfie with the fort replica or a photograph of the fort replica. With people in the
+// photo, an individual stands beside the replica and a team poses around it.
 // `share` is how much of the frame the replica vs. the builder(s) should fill (SRS v2.1 §4: about 75 % fort replica,
 // 25 % participant selfie / team); `example` is a model photo (public/images/photo-guide) and its width/height ratio,
 // used to line the two up at equal height.
@@ -19,8 +20,8 @@ export const PHOTO_GUIDES = {
   individual: {
     title: ["Individual photo", "वैयक्तिक फोटो"],
     body: [
-      "The fort replica must stand out clearly in the photo. We expect a photo of the person who built it standing beside the replica.",
-      "दुर्ग प्रतिकृतीचा वैयक्तिक फोटो अपलोड करताना प्रतिकृती ठळकपणे दिसणे महत्त्वाचे आहे. प्रतिकृती घडवणारी व्यक्ती प्रतिकृतीच्या बाजूला उभी आहे, असा फोटो अपेक्षित आहे.",
+      "The fort replica must stand out clearly in the photo. If you are in the photo, stand beside the replica as shown here.",
+      "दुर्ग प्रतिकृतीचा वैयक्तिक फोटो अपलोड करताना प्रतिकृती ठळकपणे दिसणे महत्त्वाचे आहे. फोटोत आपण असल्यास, येथे दाखवल्याप्रमाणे प्रतिकृतीच्या बाजूला उभे राहा.",
     ],
     share: SHARE,
     people: ["Builder", "घडवणारी व्यक्ती"],
@@ -52,8 +53,8 @@ export function FrameShare({ guide }) {
       className="frame-share"
       role="img"
       aria-label={t(
-        `The photo should be about ${replica}% fort replica and ${people}% ${guide.people[0].toLowerCase()}.`,
-        `फोटोत सुमारे ${mr(replica)}% दुर्ग प्रतिकृती आणि ${mr(people)}% ${guide.people[1]} असावी.`,
+        `With people in the photo, it should be about ${replica}% fort replica and ${people}% ${guide.people[0].toLowerCase()}.`,
+        `फोटोत व्यक्ती असल्यास सुमारे ${mr(replica)}% दुर्ग प्रतिकृती आणि ${mr(people)}% ${guide.people[1]} असावी.`,
       )}
     >
       <div className="frame-share__bar">

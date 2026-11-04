@@ -24,8 +24,8 @@ export function useRegistrationNotice() {
       state: "open",
       heading: t("Online registration is open", "ऑनलाइन नोंदणी सुरू आहे"),
       text: t(
-        "Register your fort replica now: fill in the form and upload a photo of yourself with your replica.",
-        "आपल्या दुर्ग प्रतिकृतीची नोंदणी आताच करा — अर्ज भरा आणि प्रतिकृतीसोबतचे आपले छायाचित्र अपलोड करा."
+        "Register your fort replica now: fill in the form and upload a selfie with your replica or a photograph of the fort replica.",
+        "आपल्या दुर्ग प्रतिकृतीची नोंदणी आताच करा — अर्ज भरा आणि प्रतिकृतीसोबतचा सेल्फी किंवा दुर्ग प्रतिकृतीचे छायाचित्र अपलोड करा."
       ),
       note: "",
     };
