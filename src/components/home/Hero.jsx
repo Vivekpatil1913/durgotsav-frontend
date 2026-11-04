@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowRight, Award, Info, Trophy } from "lucide-react";
+import { ArrowRight, Award, ClipboardPen, Info, Trophy } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { EDITION_YEAR, EDITION_YEAR_MR } from "../../config/edition.js";
@@ -136,7 +136,8 @@ export function Hero() {
               {t("See world record glory", "विश्वविक्रम पाहा")} <ArrowRight className="hero-btn__arrow" size={15} aria-hidden="true" />
             </span>
           </Link>
-          <Link to="/participate" className="hero-btn hero-btn--primary">
+          <Link to="/participate#reg-form" className="hero-btn hero-btn--primary">
+            <ClipboardPen className="hero-btn__icon" aria-hidden="true" />
             <span>
               {t("Participate in", `अमृत दुर्गोत्सव ${EDITION_YEAR_MR}`)}<br />
               {t(`Amrut Durgotsav ${EDITION_YEAR}`, "मध्ये सहभागी व्हा")}

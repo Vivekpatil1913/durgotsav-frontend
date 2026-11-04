@@ -33,11 +33,13 @@ function useScrollRestoration() {
         // Sections have large padding-top before their visible content.
         // Scrolling to the first eyebrow/heading inside puts content right
         // below the fixed header rather than leaving a blank padding gap.
-        const target =
-          el.tagName === 'SECTION'
-            ? el.querySelector('.eyebrow, h1, h2, h3') ?? el
-            : el;
-        scrollToElement(target);
+        const isSection = el.tagName === 'SECTION';
+        const target = isSection
+          ? el.querySelector('.eyebrow, h1, h2, h3') ?? el
+          : el;
+        // Those headings sit in a Reveal, still shifted down when measured, so they
+        // keep the extra offset. A direct target needs only scroll-padding-top.
+        scrollToElement(target, isSection ? undefined : 0);
       }
     }, 100);
     return () => clearInterval(timer);

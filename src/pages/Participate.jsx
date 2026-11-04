@@ -19,7 +19,7 @@ function ClosedNotice() {
   const t = useT();
   const notice = useRegistrationNotice();
   return (
-    <div className="card-light closed-notice" role="status">
+    <div id="reg-form" className="card-light closed-notice" role="status">
       <CalendarClock aria-hidden="true" />
       <h2>{notice.heading}</h2>
       <p>{notice.text}</p>

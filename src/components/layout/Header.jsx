@@ -12,7 +12,7 @@ import "./header.css";
 const NAV = [
   { to: "/about",     label: { en: "Campaign Objectives", mr: "मोहिमेचे उद्दिष्ट" } },
   { to: "/#story",    label: { en: "Information", mr: "माहिती" }, hash: true },
-  { to: "/participate", label: { en: "Participation", mr: "सहभाग" } },
+  { to: "/participate#reg-form", label: { en: "Participation", mr: "सहभाग" }, hash: true, activeOn: "/participate" },
   { to: "/gallery",   label: { en: "Gallery", mr: "गॅलरी" } },
 ];
 
@@ -60,7 +60,7 @@ export function Header() {
     const label = getLabel(item);
     if (item.hash) {
       const targetHash = item.to.replace(/^[^#]*/, ""); // e.g. "/#story" → "#story"
-      const isActive = pathname === "/" && hash === targetHash;
+      const isActive = item.activeOn ? pathname === item.activeOn : pathname === "/" && hash === targetHash;
 
       const handleClick = (e) => {
         setOpen(false);
@@ -77,6 +77,7 @@ export function Header() {
           key={item.to}
           to={item.to}
           className={`${className || ""} ${isActive ? "active" : ""}`.trim()}
+          aria-current={isActive ? "page" : undefined}
           onClick={handleClick}
         >
           {label}
@@ -150,7 +151,7 @@ export function Header() {
               <Link to="/#world-record" className="site-header__cta site-header__cta--block" onClick={() => setOpen(false)}>
                 {t("World record glory", "विश्वविक्रम")} <ArrowRight size={16} aria-hidden="true" />
               </Link>
-              <Link to="/participate#register" className="btn btn--ghost btn--lg btn--block">
+              <Link to="/participate#reg-form" className="btn btn--ghost btn--lg btn--block" onClick={() => setOpen(false)}>
                 {t("Participate", "सहभाग")}
               </Link>
               <button

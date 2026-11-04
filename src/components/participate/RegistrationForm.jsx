@@ -237,7 +237,7 @@ export function RegistrationForm() {
   return (
     <>
       <PhotoExamples />
-      <form className="reg-form card-light" onSubmit={onSubmit} noValidate ref={formRef} aria-labelledby="reg-title">
+      <form id="reg-form" className="reg-form card-light" onSubmit={onSubmit} noValidate ref={formRef} aria-labelledby="reg-title">
         <div className="reg-form__head">
           <h2 id="reg-title">{t(`Durgotsav ${EDITION_YEAR} Registration`, `दुर्गोत्सव ${EDITION_YEAR_MR} नोंदणी`)}</h2>
           <p className="muted reg-form__lead">

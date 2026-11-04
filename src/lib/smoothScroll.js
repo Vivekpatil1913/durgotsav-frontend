@@ -33,8 +33,9 @@ export function scrollToTop() {
   window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 
-export function scrollToElement(el) {
+// Lenis already applies scroll-padding-top and scroll-margin-top, like scrollIntoView: offset stacks on top of them
+export function scrollToElement(el, offset = -90) {
   if (!el) return;
-  if (lenis) lenis.scrollTo(el, { offset: -90 });
+  if (lenis) lenis.scrollTo(el, { offset });
   else el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
 }

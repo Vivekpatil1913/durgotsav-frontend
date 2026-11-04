@@ -180,6 +180,10 @@
 .participate-form {
   scroll-margin-top: calc(var(--header-h) + 16px);
 }
+/* Landing spot of /participate#reg-form: the page's scroll-padding-top already clears the header */
+.participate-form .reg-form {
+  scroll-margin-top: 0;
+}
 .participate-highlights {
   gap: var(--space-3);
 }
