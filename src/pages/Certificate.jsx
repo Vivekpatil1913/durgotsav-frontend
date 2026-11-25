@@ -14,7 +14,7 @@ import { useLang, useT } from "../context/LanguageContext.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { http, toApiError } from "../lib/api.js";
 import { assetUrl, enDate, mr, mrDate, STATUS, STATUS_EN } from "../lib/format.js";
-import { preparePhoto } from "../lib/image.js";
+import { PHOTO_ACCEPT, preparePhoto } from "../lib/image.js";
 import "./pages.css";
 
 // "download" keeps its key (older links say ?tab=download); it now looks certificates up by mobile number (SRS v2.1 §5)
@@ -327,7 +327,7 @@ function Resubmit({ query, onDone }) {
             <ImagePlus aria-hidden="true" /><strong>{t("Select a new photo", "नवीन छायाचित्र निवडा")}</strong>
           </button>
         )}
-        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label={t("New photo", "नवीन छायाचित्र")} tabIndex={-1}
+        <input ref={fileRef} type="file" accept={PHOTO_ACCEPT} className="sr-only" aria-label={t("New photo", "नवीन छायाचित्र")} tabIndex={-1}
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;

@@ -21,7 +21,8 @@ export function enDate(value, opts = { day: "numeric", month: "long", year: "num
 // Uploaded files live on the API host; everything else is in the website's /public folder.
 export const assetUrl = (path) => {
   if (!path) return "";
-  if (/^https?:\/\//.test(path)) return path;
+  if (/^https?:\/\//.test(path) && !/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/uploads\//.test(path)) return path;
+  path = path.replace(/^https?:\/\/[^/]+/, ""); // an address saved on a developer's machine
   return path.startsWith("/uploads/") ? `${API_URL}${path}` : path;
 };
 

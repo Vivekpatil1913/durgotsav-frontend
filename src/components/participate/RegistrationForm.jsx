@@ -7,7 +7,7 @@ import { useSite } from "../../context/SiteContext.jsx";
 import { useApi } from "../../hooks/useApi.js";
 import { http, toApiError } from "../../lib/api.js";
 import { mr } from "../../lib/format.js";
-import { MAX_UPLOAD_MB, preparePhoto } from "../../lib/image.js";
+import { MAX_PICK_MB, PHOTO_ACCEPT, preparePhoto } from "../../lib/image.js";
 import "../certificate/certificate.css";
 import { Modal } from "../ui/Modal.jsx";
 import { Captcha } from "./Captcha.jsx";
@@ -357,7 +357,7 @@ export function RegistrationForm() {
                 <li><Check aria-hidden="true" />{t("A selfie with your replica or a photograph of the fort replica; the replica fills most of the frame.", "प्रतिकृतीसोबतचा सेल्फी किंवा दुर्ग प्रतिकृतीचे छायाचित्र; फोटोचा बहुतांश भाग प्रतिकृतीने व्यापलेला असावा.")}</li>
                 <li><Check aria-hidden="true" />{t("Keep the whole replica in the frame, in good light and in focus.", "संपूर्ण प्रतिकृती फ्रेममध्ये, चांगल्या प्रकाशात व स्पष्ट दिसावी.")}</li>
                 <li><Check aria-hidden="true" />{t("Only a replica you built yourself — no internet, AI-made or edited photos.", "स्वतः बनवलेल्या प्रतिकृतीचाच फोटो — इंटरनेटवरील, AI ने बनवलेले किंवा एडिट केलेले फोटो नकोत.")}</li>
-                <li><Check aria-hidden="true" /><span>{t("One photo · JPG, PNG or WebP · ", "एकच फोटो · JPG, PNG किंवा WebP · ")}<strong>{t(`max ${MAX_UPLOAD_MB} MB`, `कमाल ${MAX_UPLOAD_MB} MB`)}</strong></span></li>
+                <li><Check aria-hidden="true" /><span>{t("One photo · JPG, PNG or WebP · ", "एकच फोटो · JPG, PNG किंवा WebP · ")}<strong>{t(`max ${MAX_PICK_MB} MB`, `कमाल ${MAX_PICK_MB} MB`)}</strong></span></li>
               </ul>
             </section>
 
@@ -395,7 +395,7 @@ export function RegistrationForm() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept={PHOTO_ACCEPT}
               className="sr-only"
               aria-labelledby="photo-label"
               onChange={(e) => addPhoto(e.target.files)}
